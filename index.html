@@ -1116,8 +1116,14 @@
       document.getElementById('stat-done').innerText = doneCount;
       
       if (currentRole === 'Dev') {
-          // Active count defined as issues created today for Dev
-          document.getElementById('stat-active').innerText = baseJiraContext.filter(t => t.created === todayStr).length;
+           const doneTodayKeys = getDoneTodayKeys();
+           const countDoneToday = baseJiraContext.filter(t => {
+              if (t.status === 'เสร็จสิ้น') {
+                 return t.created === todayStr || doneTodayKeys.includes(t.key);
+              }
+              return false;
+           }).length;
+           document.getElementById('stat-active').innerText = countDoneToday;
       } else {
           document.getElementById('stat-active').innerText = activeCount;
       }
@@ -2102,6 +2108,7 @@
        
        const task = rawJiraData.find(t => t.key === key);
        if (!task) return;
+        removeDoneTodayKey(key);
        
        let newRawStatus = "To Do";
        let newMappedStatus = "กำลังดำเนินการ";
@@ -2121,6 +2128,7 @@
        } else if (targetColumn === 'DONE') {
           newRawStatus = "Done";
           newMappedStatus = "เสร็จสิ้น";
+          addDoneTodayKey(key);
        }
        
        const oldRawStatus = task.rawStatus;
@@ -2162,6 +2170,38 @@
        } catch (err) {
           console.error("Network error updating Jira:", err);
           document.getElementById('current-role-desc').innerText = `ย้ายงานล้มเหลว: เกิดปัญหาการเชื่อมต่อเครือข่าย (ข้อมูลเปลี่ยนชั่วคราว)`;
+       }
+    }
+
+    // --- Done Today Tracking functions ---
+    function getDoneTodayKeys() {
+       const todayStr = new Date().toISOString().substring(0, 10);
+       const stored = localStorage.getItem('tasky_done_today_data');
+       if (stored) {
+          const data = JSON.parse(stored);
+          if (data.date === todayStr) {
+             return data.keys || [];
+          }
+       }
+       return [];
+    }
+
+    function addDoneTodayKey(key) {
+       const todayStr = new Date().toISOString().substring(0, 10);
+       let keys = getDoneTodayKeys();
+       if (!keys.includes(key)) {
+          keys.push(key);
+       }
+       localStorage.setItem('tasky_done_today_data', JSON.stringify({ date: todayStr, keys: keys }));
+    }
+
+    function removeDoneTodayKey(key) {
+       const todayStr = new Date().toISOString().substring(0, 10);
+       let keys = getDoneTodayKeys();
+       const index = keys.indexOf(key);
+       if (index > -1) {
+          keys.splice(index, 1);
+          localStorage.setItem('tasky_done_today_data', JSON.stringify({ date: todayStr, keys: keys }));
        }
     }
 
