@@ -1,0 +1,1898 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasky - Jira & Sheets Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { 
+        extend: { 
+          colors: { 
+            primaryBlue: '#2ea2f8', 
+            darkBg: '#0f172a', 
+            darkCard: '#1e293b', 
+            darkBorder: '#334155' 
+          } 
+        } 
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Kanit', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    
+    /* Animation classes */
+    .fade-in { animation: fadeIn 0.4s ease-in-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .modal-anim { animation: modalBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes modalBounce {
+      from { opacity: 0; transform: scale(0.9) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-darkBg dark:text-slate-100 transition-colors duration-200 min-h-screen flex flex-col">
+
+  <!-- ==================== 1. PORTAL SCREEN ==================== -->
+  <div id="portal-screen" class="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-950 dark:to-slate-900">
+    <div class="text-center mb-10 flex flex-col items-center max-w-2xl px-4">
+      <div class="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center text-white font-bold text-4xl shadow-xl shadow-blue-500/20 mb-6">T</div>
+      <h1 class="text-4xl md:text-5xl font-extrabold text-slate-950 dark:text-white mb-2 tracking-tight">Expert Technology Development</h1>
+      <h2 class="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400 mb-4">ยินดีต้อนรับเข้าสู่ Tasky</h2>
+      <p class="text-sm text-slate-500 dark:text-slate-400">สามารถเลือกบทบาทของตนเองเพื่อเข้าสู่การทำงานของระบบควบคุมโครงการ</p>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl w-full px-4">
+      <button onclick="openLoginModal('CEO')" class="bg-white dark:bg-slate-800/80 p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm hover:shadow-xl hover:border-blue-500 hover:-translate-y-1 transition-all text-center group"><div class="text-4xl mb-3 group-hover:scale-110 transition-transform">👑</div><h3 class="font-bold text-slate-800 dark:text-white text-sm">CEO</h3></button>
+      <button onclick="openLoginModal('PM')" class="bg-white dark:bg-slate-800/80 p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm hover:shadow-xl hover:border-blue-500 hover:-translate-y-1 transition-all text-center group"><div class="text-4xl mb-3 group-hover:scale-110 transition-transform">👔</div><h3 class="font-bold text-slate-800 dark:text-white text-sm">Project Manager</h3></button>
+      <button onclick="openLoginModal('SrDev')" class="bg-white dark:bg-slate-800/80 p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm hover:shadow-xl hover:border-blue-500 hover:-translate-y-1 transition-all text-center group"><div class="text-4xl mb-3 group-hover:scale-110 transition-transform">💻</div><h3 class="font-bold text-slate-800 dark:text-white text-sm">Senior Developer</h3></button>
+      <button onclick="openLoginModal('Dev')" class="bg-white dark:bg-slate-800/80 p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm hover:shadow-xl hover:border-blue-500 hover:-translate-y-1 transition-all text-center group"><div class="text-4xl mb-3 group-hover:scale-110 transition-transform">⚙️</div><h3 class="font-bold text-slate-800 dark:text-white text-sm">Developer</h3></button>
+      <button onclick="openLoginModal('Sale')" class="bg-white dark:bg-slate-800/80 p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm hover:shadow-xl hover:border-blue-500 hover:-translate-y-1 transition-all text-center group"><div class="text-4xl mb-3 group-hover:scale-110 transition-transform">💰</div><h3 class="font-bold text-slate-800 dark:text-white text-sm">Sale</h3></button>
+      <button onclick="openLoginModal('Admin')" class="bg-white dark:bg-slate-800/80 p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm hover:shadow-xl hover:border-blue-500 hover:-translate-y-1 transition-all text-center group"><div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🛠️</div><h3 class="font-bold text-slate-800 dark:text-white text-sm">Admin</h3></button>
+      <button onclick="openLoginModal('ITSupport')" class="bg-white dark:bg-slate-800/80 p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm hover:shadow-xl hover:border-blue-500 hover:-translate-y-1 transition-all text-center group"><div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🚀</div><h3 class="font-bold text-slate-800 dark:text-white text-sm">IT Support</h3></button>
+      <button onclick="openLoginModal('Service')" class="bg-white dark:bg-slate-800/80 p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm hover:shadow-xl hover:border-blue-500 hover:-translate-y-1 transition-all text-center group"><div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🛎️</div><h3 class="font-bold text-slate-800 dark:text-white text-sm">Service Request</h3></button>
+    </div>
+  </div>
+
+  <!-- ==================== 2. LOGIN MODAL ==================== -->
+  <div id="login-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl p-8 text-center scale-95 transition-transform duration-300 modal-anim">
+       <div id="login-role-icon" class="text-5xl mb-4">👑</div>
+       <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-1">เข้าสู่ระบบ</h2>
+       <p id="login-role-name" class="text-sm text-blue-600 dark:text-blue-400 font-medium mb-6">บทบาท: CEO</p>
+       <div class="text-left mb-6">
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">ระบุชื่อผู้ใช้งาน (Username)</label>
+          <div class="relative">
+            <i class="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input type="text" id="portal-username" value="User Admin" class="w-full pl-10 pr-4 py-3 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:border-blue-500 font-medium text-slate-900 dark:text-white transition">
+          </div>
+       </div>
+       <div class="flex gap-3">
+          <button onclick="closeLoginModal()" class="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 rounded-xl font-medium text-sm transition">ยกเลิก</button>
+          <button onclick="confirmLogin()" class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm shadow-lg transition">เข้าสู่ระบบ</button>
+       </div>
+    </div>
+  </div>
+
+  <!-- ==================== 3. MAIN DASHBOARD LAYOUT ==================== -->
+  <div id="main-layout" class="flex min-h-screen hidden">
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebar-backdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-35 hidden md:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar-container" class="w-72 bg-white dark:bg-darkCard border-r border-slate-200 dark:border-darkBorder p-6 fixed inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0 md:static md:block flex-shrink-0 transition-transform duration-300">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-blue-500/30">T</div>
+        <div>
+          <h1 class="font-bold text-xl leading-none text-slate-900 dark:text-white">Tasky</h1>
+          <span class="text-sm text-slate-400">Jira & Sheets System</span>
+        </div>
+      </div>
+      
+      <nav class="space-y-2">
+        <button id="menu-dashboard" onclick="setTab('dashboard')" class="w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left">
+          <i class="fa-solid fa-chart-pie text-lg w-6"></i> <span>แดชบอร์ด</span>
+        </button>
+        
+        <button id="menu-tasklist" onclick="setTab('tasklist')" class="w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left">
+          <i class="fa-solid fa-list-check text-lg w-6"></i> <span>รายการงาน</span>
+        </button>
+
+        <button id="menu-calendar" onclick="setTab('calendar')" class="hidden w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left">
+          <i class="fa-regular fa-calendar-days text-emerald-500 text-lg w-6"></i> <span>ตารางงาน</span>
+        </button>
+
+        <!-- Sidebar Dev Team Menu (Developer role only) -->
+        <div id="dev-team-menu" class="hidden pt-4 border-t border-slate-100 dark:border-darkBorder mt-4">
+            <p class="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">งานของแต่ละคน</p>
+            <button onclick="filterDevWork('all')" id="dev-team-all" class="w-full flex items-center gap-3.5 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white rounded-xl text-sm font-semibold transition text-left">
+                👥 ทุกคน
+            </button>
+            <button onclick="filterDevWork('เมย์')" id="dev-team-may" class="w-full flex items-center gap-3.5 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-sm font-medium transition text-left mt-1">
+                <div class="w-6 h-6 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center text-xs font-bold">M</div> เมย์ (Jira)
+            </button>
+            <button onclick="filterDevWork('ตะวัน')" id="dev-team-tawan" class="w-full flex items-center gap-3.5 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-sm font-medium transition text-left mt-1">
+                <div class="w-6 h-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-bold">T</div> ตะวัน (Jira)
+            </button>
+        </div>
+
+        <div class="pt-6 border-t border-slate-100 dark:border-darkBorder mt-6">
+          <button onclick="logoutToPortal()" class="w-full flex items-center gap-3.5 px-4 py-3 text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl transition text-left font-semibold">
+            <i class="fa-solid fa-right-from-bracket text-base w-6"></i> ออกจากระบบ 
+          </button>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Workspace Pane -->
+    <main class="flex-1 p-6 md:p-8 overflow-y-auto max-w-[1600px] mx-auto w-full flex flex-col">
+      <!-- Workspace Header -->
+      <header class="flex justify-between items-center mb-8 bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm">
+        <div class="flex items-center gap-3">
+          <!-- Mobile Sidebar Toggle -->
+          <button onclick="toggleMobileSidebar()" class="md:hidden p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300">
+            <i class="fa-solid fa-bars text-lg"></i>
+          </button>
+          <div>
+            <h2 id="current-role-title" class="text-xl font-bold text-slate-950 dark:text-white">แดชบอร์ด</h2>
+            <p id="current-role-desc" class="text-sm text-slate-500 dark:text-slate-400">กำลังเชื่อมต่อข้อมูล...</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center">
+          <!-- Action controls based on roles -->
+          <div id="action-buttons" class="hidden flex items-center gap-2 mr-4 pr-4 border-r border-slate-200 dark:border-darkBorder">
+            <button id="btn-create-task" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition shadow-md">
+                <i class="fa-solid fa-plus mr-1"></i> <span id="btn-create-task-text">สร้างงาน</span>
+            </button>
+            <button id="btn-schedule" onclick="openModal('meetingModal')" class="hidden px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition shadow-md">
+                <i class="fa-regular fa-calendar-plus mr-1"></i> นัดหมาย
+            </button>
+          </div>
+
+          <!-- Multi-select for CEO Spaces -->
+          <div id="ceo-multi-space-container" class="hidden relative mr-4">
+             <button onclick="toggleCEOSpaceDropdown()" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-darkBorder text-slate-800 dark:text-slate-200 rounded-xl text-sm font-semibold transition flex items-center gap-2">
+               📁 <span id="ceo-space-btn-text">สเปซทั้งหมด</span> <i class="fa-solid fa-chevron-down text-xs"></i>
+             </button>
+             <div id="ceo-space-dropdown" class="absolute right-0 mt-2 w-64 bg-white dark:bg-darkCard border border-slate-200 dark:border-darkBorder rounded-2xl shadow-xl p-4 hidden z-20 space-y-2">
+                <div class="flex justify-between items-center text-xs text-slate-400 pb-2 border-b border-slate-100 dark:border-slate-800">
+                  <span>เลือกพื้นที่โครงการ</span>
+                  <button onclick="selectAllCEOSpaces()" class="text-blue-500 font-semibold hover:underline">ทั้งหมด</button>
+                </div>
+                <div id="ceo-space-list" class="max-h-48 overflow-y-auto space-y-1.5 pt-1 text-sm">
+                   <!-- Space items populated dynamically -->
+                </div>
+             </div>
+          </div>
+
+          <!-- Refresh Button -->
+          <button onclick="loadData()" class="p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300 mr-2" title="ดึงข้อมูลล่าสุด">
+            <i class="fa-solid fa-arrows-rotate text-lg"></i>
+          </button>
+
+          <!-- Dark Mode Toggle -->
+          <button onclick="toggleDarkMode()" class="p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300 mr-4">
+            <i id="theme-icon" class="fa-solid fa-sun text-lg"></i>
+          </button>
+          
+          <!-- Profile Badge -->
+          <div class="flex items-center gap-3">
+            <div id="user-avatar" class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-sm">US</div>
+            <div class="hidden sm:block text-left">
+              <p id="dashboard-username" class="text-sm font-semibold leading-tight">User Account</p>
+              <p id="user-sub-role" class="text-xs text-slate-400">-</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ==================== TAB: DASHBOARD ==================== -->
+      <div id="tab-content-dashboard" class="space-y-8 fade-in">
+        <!-- KPI Metrics Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- KPI 1 (Value) -->
+          <div id="kpi-box-1" onclick="handleKPIBoxClick('value')" class="hidden cursor-pointer hover:border-amber-400 hover:shadow-md hover:-translate-y-0.5 transition-all bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+            <p id="kpi-label-1" class="text-sm font-medium text-slate-500 dark:text-slate-400">มูลค่ารวม (THB)</p>
+            <h3 id="stat-value" class="text-3xl font-bold mt-2 text-amber-500">฿0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-amber-50 dark:bg-amber-950/50 text-amber-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition"><i class="fa-solid fa-coins"></i></div>
+          </div>
+          <!-- KPI 2 (Total) -->
+          <div id="kpi-box-2" onclick="handleKPIBoxClick('all-items')" class="cursor-pointer hover:border-blue-400 hover:shadow-md hover:-translate-y-0.5 transition-all bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+            <p id="kpi-label-2" class="text-sm font-medium text-slate-500 dark:text-slate-400">งานทั้งหมด</p>
+            <h3 id="stat-total" class="text-3xl font-bold mt-2 text-slate-900 dark:text-white">0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-blue-50 dark:bg-blue-950/50 text-blue-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition"><i id="kpi-icon-2" class="fa-solid fa-folder-open"></i></div>
+          </div>
+          <!-- KPI 3 (Active) -->
+          <div id="kpi-box-3" onclick="handleKPIBoxClick('active')" class="cursor-pointer hover:border-blue-400 hover:shadow-md hover:-translate-y-0.5 transition-all bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+            <p id="kpi-label-3" class="text-sm font-medium text-slate-500 dark:text-slate-400">กำลังดำเนินการ</p>
+            <h3 id="stat-active" class="text-3xl font-bold mt-2 text-blue-500">0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-blue-50 dark:bg-blue-950/50 text-blue-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition"><i id="kpi-icon-3" class="fa-solid fa-spinner animate-spin"></i></div>
+          </div>
+          <!-- KPI 4 (Done) -->
+          <div id="kpi-box-4" onclick="handleKPIBoxClick('done')" class="cursor-pointer hover:border-emerald-400 hover:shadow-md hover:-translate-y-0.5 transition-all bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+            <div class="flex justify-between items-start">
+               <p id="kpi-label-4" class="text-sm font-medium text-slate-500 dark:text-slate-400">เสร็จสิ้น</p>
+               <span id="kpi-reset-subtext" class="hidden text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">รีเซ็ตรายปี</span>
+            </div>
+            <h3 id="stat-done" class="text-3xl font-bold mt-2 text-emerald-500">0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition"><i class="fa-solid fa-circle-check"></i></div>
+          </div>
+        </section>
+
+        <!-- Charts Pane -->
+        <section id="charts-section" class="grid grid-cols-1 lg:grid-cols-2 gap-6 transition-all">
+          <div id="chart-container-1" class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm flex flex-col justify-between">
+            <h4 id="chart-title-1" class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4">กราฟเป้าหมายมูลค่างาน</h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chart1"></canvas>
+            </div>
+          </div>
+          <div id="chart-container-2" class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm flex flex-col justify-between">
+            <h4 id="chart-title-2" class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4">แนวโน้มเปรียบเทียบข้อมูล</h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chart2"></canvas>
+            </div>
+          </div>
+          <div id="chart-container-3" class="hidden bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm flex flex-col justify-between">
+            <h4 id="chart-title-3" class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4"><i class="fa-solid fa-chart-pie mr-2 text-purple-500"></i>สถานะของงานภาพรวม</h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chart3"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- Top Priority List for Developer view -->
+        <section id="dev-priority-section" class="hidden bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm">
+           <h4 class="text-base font-bold mb-4 text-slate-900 dark:text-white"><i class="fa-solid fa-circle-exclamation text-rose-500 mr-2"></i>งานเร่งด่วนที่สุด 5 อันดับแรก (ตามความสำคัญ)</h4>
+           <div id="dev-priority-list" class="space-y-2">
+              <!-- Dynamically populated dev issues -->
+           </div>
+        </section>
+
+        <!-- Quick View Recent Tasks Table -->
+        <section id="recent-tasks-panel" class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm overflow-hidden p-6">
+           <h4 class="text-base font-bold mb-4 text-slate-900 dark:text-white">ตารางสรุปคิวงานล่าสุด</h4>
+           <div class="overflow-x-auto">
+             <table class="w-full text-left border-collapse">
+               <thead>
+                 <tr class="bg-slate-50 dark:bg-slate-800/50 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-darkBorder">
+                   <th class="p-3 pl-5">Key</th>
+                   <th class="p-3">หัวข้อเรื่อง (Summary)</th>
+                   <th class="p-3">ประเภท</th>
+                   <th class="p-3">สถานะ</th>
+                   <th class="p-3">ผู้ดูแล</th>
+                 </tr>
+               </thead>
+               <tbody id="recent-tasks-tbody" class="divide-y divide-slate-100 dark:divide-darkBorder text-sm">
+                  <!-- Recent 5 tasks here -->
+               </tbody>
+             </table>
+           </div>
+        </section>
+      </div>
+
+      <!-- ==================== TAB: TASK LIST ==================== -->
+      <div id="tab-content-tasklist" class="space-y-6 fade-in hidden">
+        <section id="table-section" class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm overflow-hidden">
+          <div id="filter-section" class="p-4 border-b border-slate-200 dark:border-darkBorder flex flex-col md:flex-row gap-3 items-center justify-between">
+            <div class="flex gap-2 w-full md:w-auto">
+              <select id="statusFilter" onchange="handleFilterChange()" class="text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 focus:outline-none text-slate-800 dark:text-white">
+                <option value="">ทุกสถานะ</option>
+                <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+                <option value="เสร็จสิ้น">เสร็จสิ้น</option>
+              </select>
+              <select id="typeFilter" onchange="handleFilterChange()" class="text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl px-3 py-2 focus:outline-none text-slate-800 dark:text-white">
+                <option value="">ทุกประเภท</option>
+                <option value="Support">Support</option>
+                <option value="Install">Install</option>
+                <option value="R&D">R&D</option>
+              </select>
+            </div>
+            
+            <div class="relative w-full max-w-sm ml-auto">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+              <input type="text" id="searchInput" oninput="handleFilterChange()" placeholder="ค้นหาชื่อเรื่องหรือคีย์..." class="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-darkBorder rounded-xl focus:outline-none focus:border-blue-500 text-slate-900 dark:text-white transition">
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr id="table-header-row" class="bg-slate-50 dark:bg-slate-800/50 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-darkBorder">
+                   <!-- Populated dynamically based on role -->
+                </tr>
+              </thead>
+              <tbody id="task-table-body" class="divide-y divide-slate-100 dark:divide-darkBorder text-sm"></tbody>
+            </table>
+          </div>
+          <!-- Pagination -->
+          <div id="pagination-section" class="p-4 flex justify-between items-center border-t border-slate-100 dark:border-darkBorder bg-slate-50/50 dark:bg-slate-800/20">
+            <span id="page-info" class="text-xs text-slate-500">แสดงผล 0 ถึง 0</span>
+            <div class="flex gap-2">
+              <button onclick="changePage(-1)" id="btn-prev" class="px-3 py-1.5 text-xs bg-white dark:bg-slate-850 border border-slate-200 dark:border-darkBorder rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 transition text-slate-800 dark:text-white">ก่อนหน้า</button>
+              <button onclick="changePage(1)" id="btn-next" class="px-3 py-1.5 text-xs bg-white dark:bg-slate-850 border border-slate-200 dark:border-darkBorder rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 transition text-slate-800 dark:text-white">ถัดไป</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ==================== TAB: CALENDAR ==================== -->
+      <div id="tab-content-calendar" class="space-y-6 fade-in hidden">
+         <section class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm">
+            <div id="calendar-header" class="flex justify-between items-center pb-4 border-b border-slate-100 dark:border-darkBorder mb-6">
+               <h3 id="calendar-month-title" class="text-lg font-bold">ปฏิทินนัดหมายการทำงาน (Calendar)</h3>
+               <button onclick="openModal('meetingModal')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition shadow-md">
+                 <i class="fa-regular fa-calendar-plus mr-1"></i> สร้างนัดหมายการประชุม
+               </button>
+            </div>
+            <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+               <div>อา.</div><div>จ.</div><div>อ.</div><div>พ.</div><div>พฤ.</div><div>ศ.</div><div>ส.</div>
+            </div>
+            <div id="calendar-grid" class="grid grid-cols-7 gap-2">
+               <!-- Populated dynamically in javascript -->
+            </div>
+         </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== 4. MODALS & POPUPS ==================== -->
+  
+  <!-- MODAL: Meeting Scheduler Modal -->
+  <div id="meetingModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-darkCard w-full max-w-lg rounded-2xl p-6 scale-95 transition-transform duration-300 modal-anim border dark:border-darkBorder shadow-2xl">
+        <h3 class="text-lg font-bold mb-4 text-slate-900 dark:text-white"><i class="fa-solid fa-video text-emerald-500 mr-2"></i> สร้างนัดหมายประชุม</h3>
+        <div class="space-y-3 text-sm text-slate-700 dark:text-slate-300">
+            <div>
+                <label class="block mb-1 font-semibold">รูปแบบการประชุม</label>
+                <select id="meet-type" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 focus:border-blue-500 outline-none text-slate-800 dark:text-white">
+                    <option value="expert">ประชุมในห้อง Expert Room</option>
+                    <option value="online">ประชุมออนไลน์ (Google Meet)</option>
+                </select>
+            </div>
+            <div><label class="block mb-1 font-semibold">ชื่อหัวข้อ</label><input type="text" id="meet-topic" placeholder="หัวข้อการประชุม..." class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 focus:border-blue-500 outline-none text-slate-900 dark:text-white"></div>
+            <div><label class="block mb-1 font-semibold">รายละเอียดของงาน</label><textarea id="meet-desc" rows="3" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 focus:border-blue-500 outline-none text-slate-900 dark:text-white"></textarea></div>
+            <div class="grid grid-cols-2 gap-3">
+                <div><label class="block mb-1 font-semibold">วันที่</label><input type="date" id="meet-date" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 text-slate-800 dark:text-white"></div>
+                <div><label class="block mb-1 font-semibold">เวลา</label><input type="time" id="meet-time" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 text-slate-800 dark:text-white"></div>
+            </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-2 border-t dark:border-slate-700 pt-4">
+            <button onclick="closeModal('meetingModal')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg font-medium text-sm text-slate-700 dark:text-white">ยกเลิก</button>
+            <button onclick="submitMeeting()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm shadow-md transition">บันทึกลงปฏิทิน</button>
+        </div>
+    </div>
+  </div>
+
+  <!-- MODAL: IT Support Create Ticket Modal -->
+  <div id="itSupportTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-darkCard w-full max-w-lg rounded-2xl p-6 scale-95 transition-transform duration-300 modal-anim border dark:border-darkBorder shadow-2xl">
+        <h3 class="text-lg font-bold mb-4 text-slate-900 dark:text-white"><i class="fa-solid fa-headset text-blue-500 mr-2"></i> สร้างตั๋วงาน IT Support</h3>
+        <div class="space-y-3 text-sm text-slate-700 dark:text-slate-300">
+            <div><label class="block mb-1 font-semibold">ชื่องาน (Task Name)</label><input type="text" id="it-name" placeholder="เช่น ซ่อมคอมพิวเตอร์..." class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 outline-none text-slate-900 dark:text-white"></div>
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="block mb-1 font-semibold">Line ID</label><input type="text" id="it-line" placeholder="@username" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 outline-none text-slate-900 dark:text-white"></div>
+              <div><label class="block mb-1 font-semibold">ประเภท</label><select id="it-type" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 outline-none text-slate-850 dark:text-white"><option value="Support">Support</option><option value="Install">Install</option></select></div>
+            </div>
+            <div><label class="block mb-1 font-semibold">ปัญหาที่พบ</label><input type="text" id="it-prob" placeholder="ปัญหาการใช้งาน..." class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 outline-none text-slate-900 dark:text-white"></div>
+            <div><label class="block mb-1 font-semibold">วิธีการแก้ปัญหา</label><textarea id="it-sol" placeholder="เช่น อัปเดตไดรเวอร์ หรือเปลี่ยนฮาร์ดแวร์..." rows="2" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 outline-none text-slate-900 dark:text-white"></textarea></div>
+            <div class="grid grid-cols-3 gap-3">
+                <div><label class="block mb-1 font-semibold">ความสำคัญ</label><select id="it-prio" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 outline-none text-slate-850 dark:text-white"><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select></div>
+                <div><label class="block mb-1 font-semibold">เริ่ม</label><input type="date" id="it-start" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2"></div>
+                <div><label class="block mb-1 font-semibold">กำหนดส่ง</label><input type="date" id="it-due" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2"></div>
+            </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-2 border-t dark:border-slate-700 pt-4">
+            <button onclick="closeModal('itSupportTaskModal')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg font-medium text-sm text-slate-700 dark:text-white">ยกเลิก</button>
+            <button onclick="submitITTask()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm shadow-md transition">บันทึกลง Sheet</button>
+        </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Task Details Modal -->
+  <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-darkCard w-full max-w-2xl rounded-2xl border border-slate-200 dark:border-darkBorder shadow-2xl overflow-hidden scale-95 transition-transform duration-300 modal-anim">
+      <div class="p-6 border-b border-slate-100 dark:border-darkBorder flex justify-between items-start">
+        <div>
+          <span id="modal-key" class="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 rounded-md uppercase">TAS-001</span>
+          <h3 id="modal-title" class="text-lg font-bold mt-2 text-slate-900 dark:text-white">หัวข้อรายละเอียด</h3>
+        </div>
+        <button onclick="closeModal('detailModal')" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+        <div id="modal-grid" class="grid grid-cols-2 gap-4 text-xs"></div>
+        
+        <!-- Status Changer Panel for IT Support -->
+        <div id="it-status-change" class="hidden mt-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+           <span class="font-bold text-slate-800 dark:text-slate-200 text-sm">อัปเดตสถานะงาน IT:</span>
+           <div class="flex gap-2 flex-1 max-w-xs">
+              <select id="it-update-status" class="border dark:border-slate-700 p-2 text-sm rounded-lg bg-white dark:bg-darkCard w-full outline-none text-slate-800 dark:text-white">
+                <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+                <option value="เสร็จสิ้น">เสร็จสิ้น</option>
+              </select>
+              <button onclick="updateITStatus()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg font-semibold transition shadow-md">บันทึก</button>
+           </div>
+        </div>
+        
+        <div>
+          <h4 class="text-xs font-bold text-slate-400 uppercase mb-1.5">รายละเอียด</h4>
+          <div id="modal-desc" class="text-sm bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-darkBorder whitespace-pre-wrap leading-relaxed text-slate-700 dark:text-slate-300"></div>
+        </div>
+      </div>
+      <div class="p-4 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-darkBorder flex justify-end">
+        <button onclick="closeModal('detailModal')" class="px-4 py-2 bg-slate-200 hover:bg-slate-350 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl font-medium text-xs text-slate-800 dark:text-white">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Space List Popup (CEO Overview KPI Click) -->
+  <div id="ceoSpaceModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-darkCard w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden scale-95 transition-transform duration-300 modal-anim flex flex-col max-h-[80vh] border dark:border-darkBorder">
+      <div class="p-5 border-b border-slate-100 dark:border-darkBorder flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+        <div>
+          <h3 id="ceo-spacelist-title" class="text-lg font-bold text-slate-900 dark:text-white">รายการ Space</h3>
+          <p id="ceo-spacelist-subtitle" class="text-xs text-slate-500">รายละเอียดพื้นที่การทำงานในระบบ Jira</p>
+        </div>
+        <button onclick="closeModal('ceoSpaceModal')" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-0">
+        <table class="w-full text-left border-collapse">
+            <thead class="sticky top-0 bg-white dark:bg-darkCard shadow-sm">
+              <tr class="bg-slate-50 dark:bg-slate-800/80 text-[11px] font-bold text-slate-500 uppercase">
+                <th class="p-3 pl-5">ชื่อ Space / โครงการ</th>
+                <th class="p-3 w-40 text-center">คิวงาน (สำเร็จ / ทั้งหมด)</th>
+              </tr>
+            </thead>
+            <tbody id="popup-space-tbody" class="divide-y divide-slate-100 dark:divide-darkBorder text-sm"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Project Tree Structure Modal (PM/SrDev KPI click) -->
+  <div id="ceoTreeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-darkCard w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden scale-95 transition-transform duration-300 modal-anim flex flex-col max-h-[85vh] border dark:border-darkBorder">
+      <div class="p-5 border-b border-slate-100 dark:border-darkBorder flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+        <div>
+          <h3 id="ceo-tree-title" class="text-lg font-bold text-slate-900 dark:text-white">โครงสร้างความคืบหน้าโครงการ</h3>
+          <p id="ceo-tree-subtitle" class="text-xs text-slate-500">Space &gt; Epic &gt; Task</p>
+        </div>
+        <button onclick="closeModal('ceoTreeModal')" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4 md:p-6" id="ceo-tree-container">
+         <!-- Populated dynamically as nested accordion node structures -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 5. JAVASCRIPT LOGIC ==================== -->
+  <script>
+    // --- Configuration URL ---
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIkAhnfLFwEsF2pZNNjwXqrfYQc19Ye5RhsODwTLFDJvWqUwlGwiQDnlHBu4fHsiJ7/exec";
+
+    // --- State Variables ---
+    let rawJiraData = [];      // Mapped data from Jira
+    let mockITData = [];       // Mock Sheet data for IT Support
+    let filteredData = [];     // Data after applying search and filters
+    let currentRole = "PM";    // Active role in dashboard
+    let selectedPortalRole = ""; 
+    let currentDevAssignee = "all"; // Developer filter tab ('all' or names like 'เมย์' or 'ตะวัน')
+    
+    // UI Layout / View states
+    let currentTab = "dashboard"; // 'dashboard' | 'tasklist' | 'calendar'
+    let currentPage = 1;
+    const itemsPerPage = 8;
+    
+    // CEO Multi-Space states
+    let selectedCEOSpaces = [];
+
+    // Chart.js Instances
+    let chart1Instance = null;
+    let chart2Instance = null;
+    let chart3Instance = null;
+
+    // Role Metadata info
+    const roleInfo = {
+      CEO: { icon: "👑", name: "CEO", dept: "บริหารสูงสุด" },
+      PM: { icon: "👔", name: "Project Manager", dept: "จัดการโครงการ" },
+      SrDev: { icon: "💻", name: "Senior Developer", dept: "พัฒนาเทคนิคระดับสูง" },
+      Dev: { icon: "⚙️", name: "Developer", dept: "ทีมพัฒนาโปรแกรม" },
+      Sale: { icon: "💰", name: "Sale", dept: "ฝ่ายขายและการตลาด" },
+      Admin: { icon: "🛠️", name: "Admin", dept: "ฝ่ายประสานงานระบบ" },
+      ITSupport: { icon: "🚀", name: "IT Support", dept: "บริการช่วยเหลือด้านไอที" },
+      Service: { icon: "🛎️", name: "Service Request", dept: "คำขอใช้บริการระบบ" }
+    };
+
+    // --- Window Loaded Handler ---
+    window.onload = () => {
+      initTheme();
+      loadData(); // Connects live API or uses Offline backup
+    };
+
+    // --- Dark/Light Mode Theme Management ---
+    function initTheme() {
+      // Default theme is Light (โหมดสว่างเริ่มต้น)
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      updateThemeIcon();
+    }
+
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      updateThemeIcon();
+      rebuildCharts(); // Re-render Charts with correct theme typography colors
+    }
+
+    function updateThemeIcon() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const iconEl = document.getElementById('theme-icon');
+      if (isDark) {
+        iconEl.className = "fa-solid fa-sun text-lg";
+      } else {
+        iconEl.className = "fa-solid fa-moon text-lg";
+      }
+    }
+
+    // --- Modal Auth Functions ---
+    function openLoginModal(role) {
+      selectedPortalRole = role;
+      document.getElementById('login-role-icon').innerText = roleInfo[role].icon;
+      document.getElementById('login-role-name').innerText = `สิทธิ์เข้าใช้งาน: ${roleInfo[role].name}`;
+      
+      // Default display username based on selected role
+      let defaultUser = "User Admin";
+      if (role === 'CEO') defaultUser = "CEO Executive";
+      else if (role === 'PM') defaultUser = "PM Lead";
+      else if (role === 'SrDev') defaultUser = "Senior Dev May";
+      else if (role === 'Dev') defaultUser = "Developer May";
+      else if (role === 'ITSupport') defaultUser = "IT Staff Tawan";
+      
+      document.getElementById('portal-username').value = defaultUser;
+      openModal('login-modal');
+    }
+
+    function closeLoginModal() {
+      closeModal('login-modal');
+    }
+
+    function confirmLogin() {
+      closeLoginModal();
+      document.getElementById('portal-screen').classList.add('hidden');
+      document.getElementById('main-layout').classList.remove('hidden');
+      
+      const usernameInput = document.getElementById('portal-username').value || "User Account";
+      document.getElementById('dashboard-username').innerText = usernameInput;
+      
+      switchRole(selectedPortalRole);
+    }
+
+    function logoutToPortal() {
+      closeMobileSidebar();
+      document.getElementById('main-layout').classList.add('hidden');
+      document.getElementById('portal-screen').classList.remove('hidden');
+    }
+
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebar-container');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (sidebar.classList.contains('-translate-x-full')) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      }
+    }
+
+    function closeMobileSidebar() {
+      const sidebar = document.getElementById('sidebar-container');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (sidebar) sidebar.classList.add('-translate-x-full');
+      if (backdrop) backdrop.classList.add('hidden');
+    }
+
+    // --- Fetch Jira & Mock Data Loading ---
+    async function loadData() {
+      document.getElementById('current-role-desc').innerText = "กำลังเชื่อมต่อข้อมูลล่าสุดจาก Jira Apps Script...";
+      
+      try {
+        const response = await fetch(APPS_SCRIPT_URL);
+        const resData = await response.json();
+        
+        if (resData && resData.status === "success" && Array.isArray(resData.issues)) {
+          // Success fetching live API data
+          rawJiraData = resData.issues.map(item => {
+            // Map priority names to realistic THB values for CEO
+            const prio = (item.priority || 'Medium').toLowerCase();
+            let val = 25000;
+            if (prio === 'highest' || prio === 'critical') val = 100000;
+            else if (prio === 'high' || prio === 'major') val = 50000;
+            else if (prio === 'medium') val = 25000;
+            else if (prio === 'low' || prio === 'minor') val = 10000;
+            
+            // Map status names to thai groups (กำลังดำเนินการ, เสร็จสิ้น)
+            let mappedStatus = "กำลังดำเนินการ";
+            const currentStat = (item.status || '').toLowerCase();
+            if (['done', 'completed', 'เสร็จสิ้น', 'resolved', 'close', 'closed'].includes(currentStat)) {
+               mappedStatus = "เสร็จสิ้น";
+            }
+            
+            // Infer type R&D, Support or Install from summary
+            let inferredType = "R&D";
+            const sumLower = (item.summary || '').toLowerCase();
+            if (sumLower.includes('support') || sumLower.includes('help') || sumLower.includes('ซ่อม') || sumLower.includes('แก้')) {
+               inferredType = "Support";
+            } else if (sumLower.includes('install') || sumLower.includes('deploy') || sumLower.includes('ติดตั้ง') || sumLower.includes('setup')) {
+               inferredType = "Install";
+            }
+
+            return {
+              key: item.key,
+              project: item.projectName || "Unknown",
+              summary: item.summary || "ไม่มีชื่อหัวข้อ",
+              type: inferredType,
+              status: mappedStatus,
+              rawStatus: item.status || "Unknown",
+              assignee: item.assignee || "Unassigned",
+              priority: item.priority || "Medium",
+              created: item.created ? item.created.substring(0, 10) : new Date().toISOString().substring(0, 10),
+              desc: `ลิงก์ Jira: ${item.link || '#'}\n\nรายละเอียดเพิ่มเติมเกี่ยวกับการปฏิบัติงานและพัฒนาโครงการระดับองค์กร`,
+              value: val
+            };
+          });
+          document.getElementById('current-role-desc').innerText = `เชื่อมต่อข้อมูล Jira สำเร็จ (อัปเดต: ${new Date().toLocaleTimeString('th-TH')} น.)`;
+        } else {
+          // Failure response mapping fallback
+          console.warn("Apps Script Web App returned failure, falling back to mock values.");
+          generateMockJiraData();
+          document.getElementById('current-role-desc').innerText = "แสดงผลด้วยข้อมูลจำลอง (ดึงข้อมูลไม่สำเร็จ)";
+        }
+      } catch (err) {
+        console.error("Failed connecting to Apps Script. Using Mock Fallback:", err);
+        generateMockJiraData();
+        document.getElementById('current-role-desc').innerText = "แสดงผลด้วยข้อมูลจำลอง (เชื่อมต่อเครือข่ายล้มเหลว)";
+      }
+
+      // Initialize secondary sheets & calendars stored in localStorage
+      initITData();
+      initCalendarData();
+      
+      // Update UI role configuration
+      switchRole(currentRole);
+    }
+
+    // Fallback Mock generator if server is down or CORS issues block browser fetch
+    function generateMockJiraData() {
+      const todayStr = new Date().toISOString().substring(0, 10);
+      rawJiraData = [];
+      const assignees = ['เมย์', 'ตะวัน', 'Unassigned'];
+      const projects = ['Tasky', 'Core Tech', 'Web portal'];
+      for(let i=1; i<=25; i++) {
+          const typeNum = i % 3;
+          const statusNum = i % 4;
+          const prioNum = i % 3;
+          rawJiraData.push({
+              key: `TAS-${i.toString().padStart(3,'0')}`,
+              project: projects[i % projects.length],
+              summary: i%2===0 ? `พัฒนาระบบหลังบ้าน งานที่ ${i}` : `แก้ไขหน้าล็อกอินงานเทคโนโลยี #${i}`,
+              type: typeNum === 0 ? 'Support' : (typeNum === 1 ? 'Install' : 'R&D'),
+              status: statusNum === 0 ? 'เสร็จสิ้น' : 'กำลังดำเนินการ',
+              rawStatus: statusNum === 0 ? 'Done' : 'In Progress',
+              assignee: assignees[i % assignees.length],
+              priority: prioNum === 0 ? 'High' : (prioNum === 1 ? 'Medium' : 'Low'),
+              created: i%2 === 0 ? todayStr : '2026-06-15',
+              desc: 'รายละเอียดจำลองการทำงานของระบบควบคุมคิวตั๋วงาน Jira Cloud...',
+              value: prioNum === 0 ? 100000 : (prioNum === 1 ? 50000 : 25000)
+          });
+      }
+    }
+
+    // IT Support mock sheets proxy data initializer
+    function initITData() {
+      const todayStr = new Date().toISOString().substring(0, 10);
+      const localIT = localStorage.getItem('tasky_it_tickets');
+      if (localIT) {
+        mockITData = JSON.parse(localIT);
+      } else {
+        mockITData = [];
+        for(let i=1; i<=8; i++) {
+          mockITData.push({
+              id: `TKT-${i}`, 
+              name: `ปัญหาคอมพิวเตอร์เสีย #${i}`, 
+              lineId: `@it_user_${i}`,
+              prob: `เข้าใช้งานไม่ได้ หน้าจอดำหลังรีสตาร์ทเครื่อง`, 
+              sol: `ทำความสะอาดแรมและการเชื่อมต่อการ์ดจอใหม่`, 
+              type: i%2===0 ? 'Install' : 'Support',
+              status: i%4===0 ? 'เสร็จสิ้น' : 'กำลังดำเนินการ',
+              start: todayStr, 
+              due: todayStr, 
+              priority: i%3===0 ? 'High' : 'Medium'
+          });
+        }
+        localStorage.setItem('tasky_it_tickets', JSON.stringify(mockITData));
+      }
+    }
+
+    // Meeting dates mockup data initializer
+    function initCalendarData() {
+      const todayStr = new Date().toISOString().substring(0, 10);
+      const localCal = localStorage.getItem('tasky_calendar_events');
+      if (localCal) {
+         window.meetings = JSON.parse(localCal);
+      } else {
+         window.meetings = [
+            { id: "1", title: "Daily Sync Jira & Sheets", desc: "ติดตามสถานะงานโครงการ", date: todayStr, time: "10:00", type: "online" },
+            { id: "2", title: "CEO Executive Board Sync", desc: "วางเป้าหมายทิศทางยอดขายและคุณค่างาน", date: todayStr, time: "14:30", type: "expert" }
+         ];
+         localStorage.setItem('tasky_calendar_events', JSON.stringify(window.meetings));
+      }
+    }
+
+    // --- Workspace tab switcher ---
+    function setTab(tabName) {
+       currentTab = tabName;
+       
+       // Handle tabs visibility
+       document.getElementById('tab-content-dashboard').classList.add('hidden');
+       document.getElementById('tab-content-tasklist').classList.add('hidden');
+       document.getElementById('tab-content-calendar').classList.add('hidden');
+       
+       document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+       
+       // Handle active menu colors
+       const menuBtnDashboard = document.getElementById('menu-dashboard');
+       const menuBtnTasklist = document.getElementById('menu-tasklist');
+       const menuBtnCalendar = document.getElementById('menu-calendar');
+       
+       const activeClasses = "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold";
+       
+       // Reset menu classes
+       menuBtnDashboard.className = "w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left";
+       menuBtnTasklist.className = "w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left";
+       menuBtnCalendar.className = "hidden w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left";
+       
+       // Show calendar tab menu for authorized roles
+       if (['PM', 'SrDev', 'Dev'].includes(currentRole)) {
+          menuBtnCalendar.classList.remove('hidden');
+       }
+       
+       // Highlight selection
+       if (tabName === 'dashboard') menuBtnDashboard.className = `w-full flex items-center gap-3.5 px-4 py-3.5 ${activeClasses} rounded-xl text-base transition text-left`;
+       else if (tabName === 'tasklist') menuBtnTasklist.className = `w-full flex items-center gap-3.5 px-4 py-3.5 ${activeClasses} rounded-xl text-base transition text-left`;
+       else if (tabName === 'calendar') menuBtnCalendar.className = `w-full flex items-center gap-3.5 px-4 py-3.5 ${activeClasses} rounded-xl text-base transition text-left`;
+       
+       // Trigger render updates
+       currentPage = 1;
+       applyRoleFiltering();
+       closeMobileSidebar();
+    }
+
+    // --- Core Role Changing Logic ---
+    function switchRole(role) {
+      currentRole = role;
+      currentPage = 1;
+      currentDevAssignee = "all";
+      
+      // Auto redirect tab if calendar is active but role is restricted
+      if (currentTab === 'calendar' && !['PM', 'SrDev', 'Dev'].includes(role)) {
+         setTab('dashboard');
+      } else {
+         setTab(currentTab);
+      }
+
+      // Hidden elements reset
+      document.getElementById('kpi-box-1').classList.add('hidden');
+      document.getElementById('action-buttons').classList.add('hidden');
+      document.getElementById('btn-create-task').classList.add('hidden');
+      document.getElementById('btn-schedule').classList.add('hidden');
+      document.getElementById('dev-team-menu').classList.add('hidden');
+      document.getElementById('ceo-multi-space-container').classList.add('hidden');
+      document.getElementById('recent-tasks-panel').classList.remove('hidden');
+      document.getElementById('dev-priority-section').classList.add('hidden');
+      document.getElementById('kpi-reset-subtext').classList.add('hidden');
+      
+      // Expand grid config for charts
+      document.getElementById('chart-container-3').classList.add('hidden');
+      document.getElementById('charts-section').className = "grid grid-cols-1 lg:grid-cols-2 gap-6 transition-all";
+
+      let headerTitle = "";
+      
+      switch(role) {
+        case 'CEO':
+          headerTitle = "👑 แดชบอร์ดภาพรวมบริหาร (CEO Dashboard)";
+          document.getElementById('kpi-box-1').classList.remove('hidden');
+          document.getElementById('ceo-multi-space-container').classList.remove('hidden');
+          document.getElementById('kpi-reset-subtext').classList.remove('hidden');
+          
+          // Show 3 charts for CEO
+          document.getElementById('chart-container-3').classList.remove('hidden');
+          document.getElementById('charts-section').className = "grid grid-cols-1 lg:grid-cols-3 gap-6 transition-all";
+          
+          setKPILabels("มูลค่าสะสม (THB)", "สเปซทั้งหมด (Spaces)", "กำลังดำเนินการ (Active)", "เสร็จสิ้น (100% Done)");
+          
+          // Reset default selected spaces for CEO multi filter
+          initCEOSpaceDropdown();
+          break;
+
+        case 'PM':
+        case 'SrDev':
+          headerTitle = role === 'PM' ? "👔 แดชบอร์ด Project Manager" : "💻 แดชบอร์ด Senior Developer";
+          document.getElementById('action-buttons').classList.remove('hidden');
+          document.getElementById('btn-create-task').classList.remove('hidden');
+          document.getElementById('btn-schedule').classList.remove('hidden');
+          
+          document.getElementById('btn-create-task-text').innerText = "สร้างงาน Jira";
+          document.getElementById('btn-create-task').onclick = () => window.open(`https://${JIRA_CONFIG.DOMAIN}/jira/for-you`, "_blank");
+          
+          setKPILabels("-", "งานทั้งหมดในระบบ", "กำลังดำเนินการ", "เสร็จสิ้น");
+          break;
+
+        case 'Dev':
+          headerTitle = "⚙️ กระดานงานส่วนบุคคล (Developer Board)";
+          document.getElementById('dev-team-menu').classList.remove('hidden');
+          document.getElementById('dev-priority-section').classList.remove('hidden');
+          
+          setKPILabels("-", "งานทั้งหมด", "ความเคลื่อนไหววันนี้", "งานเสร็จสิ้น");
+          updateDevSidebarStyles();
+          break;
+
+        case 'Sale':
+        case 'Admin':
+        case 'Service':
+          headerTitle = `🛎️ หน้าต่างการติดตามงาน (${roleInfo[role].name})`;
+          setKPILabels("-", "งานที่ทีมพัฒนากลาง", "กำลังดำเนินการ", "สำเร็จส่งมอบ");
+          break;
+
+        case 'ITSupport':
+          headerTitle = "🚀 แดชบอร์ดบันทึกตั๋วงานไอที (IT Sheets Database)";
+          document.getElementById('action-buttons').classList.remove('hidden');
+          document.getElementById('btn-create-task').classList.remove('hidden');
+          document.getElementById('btn-create-task-text').innerText = "สร้างคิวงาน Sheet";
+          document.getElementById('btn-create-task').onclick = () => openModal('itSupportTaskModal');
+          
+          setKPILabels("-", "งานบริการทั้งหมด", "ตั๋วส่งงานวันนี้", "เสร็จสิ้นปิดงาน");
+          break;
+      }
+
+      document.getElementById('current-role-title').innerText = headerTitle;
+      document.getElementById('user-avatar').innerText = role.substring(0, 2).toUpperCase();
+      document.getElementById('user-sub-role').innerText = `${roleInfo[role].name} • ${roleInfo[role].dept}`;
+      
+      applyRoleFiltering();
+    }
+
+    function setKPILabels(l1, l2, l3, l4) {
+      document.getElementById('kpi-label-1').innerText = l1;
+      document.getElementById('kpi-label-2').innerText = l2;
+      document.getElementById('kpi-label-3').innerText = l3;
+      document.getElementById('kpi-label-4').innerText = l4;
+    }
+
+    // --- Developer Filter Action ---
+    function filterDevWork(name) {
+       currentDevAssignee = name;
+       updateDevSidebarStyles();
+       applyRoleFiltering();
+    }
+    
+    function updateDevSidebarStyles() {
+       const btnAll = document.getElementById('dev-team-all');
+       const btnMay = document.getElementById('dev-team-may');
+       const btnTawan = document.getElementById('dev-team-tawan');
+       
+       const activeClasses = "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold";
+       const normalClasses = "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium";
+       
+       btnAll.className = `w-full flex items-center gap-3.5 px-4 py-2 rounded-xl text-sm transition text-left ${currentDevAssignee === 'all' ? activeClasses : normalClasses}`;
+       btnMay.className = `w-full flex items-center gap-3.5 px-4 py-2 rounded-xl text-sm transition text-left mt-1 ${currentDevAssignee === 'เมย์' ? activeClasses : normalClasses}`;
+       btnTawan.className = `w-full flex items-center gap-3.5 px-4 py-2 rounded-xl text-sm transition text-left mt-1 ${currentDevAssignee === 'ตะวัน' ? activeClasses : normalClasses}`;
+    }
+
+    // --- CEO Space Multiselect dropdown ---
+    function initCEOSpaceDropdown() {
+       const listEl = document.getElementById('ceo-space-list');
+       listEl.innerHTML = "";
+       
+       // Find all unique spaces from Jira data
+       let uniqueSpaces = [...new Set(rawJiraData.map(i => i.project))];
+       selectedCEOSpaces = [...uniqueSpaces];
+       
+       uniqueSpaces.forEach(space => {
+          const label = document.createElement('label');
+          label.className = "flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 p-1.5 rounded-lg cursor-pointer";
+          label.innerHTML = `
+            <input type="checkbox" class="ceo-space-cb rounded text-blue-500" value="${space}" checked onchange="handleCEOSpaceCheckboxChange()">
+            <span class="text-slate-700 dark:text-slate-350 truncate">${space}</span>
+          `;
+          listEl.appendChild(label);
+       });
+       
+       updateCEOSpaceDropdownButtonText();
+    }
+
+    function toggleCEOSpaceDropdown() {
+       const dropdown = document.getElementById('ceo-space-dropdown');
+       dropdown.classList.toggle('hidden');
+    }
+
+    function selectAllCEOSpaces() {
+       const checkboxes = document.querySelectorAll('.ceo-space-cb');
+       checkboxes.forEach(cb => cb.checked = true);
+       handleCEOSpaceCheckboxChange();
+    }
+
+    function handleCEOSpaceCheckboxChange() {
+       const checkboxes = document.querySelectorAll('.ceo-space-cb');
+       selectedCEOSpaces = [];
+       checkboxes.forEach(cb => {
+          if (cb.checked) selectedCEOSpaces.push(cb.value);
+       });
+       
+       updateCEOSpaceDropdownButtonText();
+       applyRoleFiltering();
+    }
+
+    function updateCEOSpaceDropdownButtonText() {
+       const textEl = document.getElementById('ceo-space-btn-text');
+       if (selectedCEOSpaces.length === 0) {
+          textEl.innerText = "ไม่เลือกสเปซ";
+       } else if (selectedCEOSpaces.length === document.querySelectorAll('.ceo-space-cb').length) {
+          textEl.innerText = "สเปซทั้งหมด";
+       } else {
+          textEl.innerText = `สเปซ (${selectedCEOSpaces.length})`;
+       }
+    }
+
+    // Close Space Dropdown on outer click
+    window.addEventListener('click', (e) => {
+       const container = document.getElementById('ceo-multi-space-container');
+       if (container && !container.contains(e.target)) {
+          document.getElementById('ceo-space-dropdown').classList.add('hidden');
+       }
+    });
+
+    // --- Data Filtering Process ---
+    function applyRoleFiltering() {
+      const searchVal = document.getElementById('searchInput').value.toLowerCase();
+      const statusVal = document.getElementById('statusFilter').value;
+      const typeVal = document.getElementById('typeFilter').value;
+      const todayStr = new Date().toISOString().substring(0, 10);
+
+      // 1. IT Support Data Filtering (Uses localStorage mock Sheets database)
+      if (currentRole === 'ITSupport') {
+          filteredData = mockITData.filter(item => {
+              if (searchVal && !item.name.toLowerCase().includes(searchVal) && !item.lineId.toLowerCase().includes(searchVal)) return false;
+              
+              const mapped = item.status === 'Completed' ? 'เสร็จสิ้น' : 'กำลังดำเนินการ';
+              if (statusVal && mapped !== statusVal) return false;
+              if (typeVal && item.type !== typeVal) return false;
+              return true;
+          });
+          
+          document.getElementById('stat-total').innerText = mockITData.length;
+          document.getElementById('stat-active').innerText = mockITData.filter(t => t.start === todayStr).length; 
+          document.getElementById('stat-done').innerText = mockITData.filter(t => t.status === 'เสร็จสิ้น').length;
+          
+          renderITTable();
+          renderITCharts();
+          renderRecentTasks(filteredData);
+          return;
+      }
+
+      // 2. Standard Jira Data Filtering (CEO, PM, Dev, Sale, etc.)
+      filteredData = rawJiraData.filter(item => {
+          // General search
+          if (searchVal && !item.summary.toLowerCase().includes(searchVal) && !item.key.toLowerCase().includes(searchVal)) return false;
+          // Status filter
+          if (statusVal && item.status !== statusVal) return false;
+          // Type filter
+          if (typeVal && item.type !== typeVal) return false;
+          
+          // Role specific filters
+          if (currentRole === 'CEO') {
+             // Multi-space filter
+             if (!selectedCEOSpaces.includes(item.project)) return false;
+          }
+          if (currentRole === 'Dev') {
+             // Developer team members sidebar filters
+             if (currentDevAssignee !== 'all') {
+                if (currentDevAssignee === 'เมย์' && !item.assignee.includes('วิชญาดา') && !item.assignee.includes('เมย์')) return false;
+                if (currentDevAssignee === 'ตะวัน' && !item.assignee.includes('ภัครพงษ์') && !item.assignee.includes('ตะวัน')) return false;
+             }
+          }
+          
+          return true;
+      });
+
+      // Update KPI Counter boxes
+      let totalCount = 0;
+      let activeCount = 0;
+      let doneCount = 0;
+      let totalValue = 0;
+
+      // Compute aggregates based on role context (but ignore query filters for KPI counters as Jira standard design)
+      const baseJiraContext = rawJiraData.filter(item => {
+         if (currentRole === 'CEO') return selectedCEOSpaces.includes(item.project);
+         if (currentRole === 'Dev') {
+            if (currentDevAssignee !== 'all') {
+               if (currentDevAssignee === 'เมย์') return item.assignee.includes('วิชญาดา') || item.assignee.includes('เมย์');
+               if (currentDevAssignee === 'ตะวัน') return item.assignee.includes('ภัครพงษ์') || item.assignee.includes('ตะวัน');
+            }
+         }
+         return true; 
+      });
+
+      baseJiraContext.forEach(item => {
+         totalCount++;
+         totalValue += item.value;
+         if (item.status === 'เสร็จสิ้น') doneCount++;
+         else activeCount++;
+      });
+
+      document.getElementById('stat-total').innerText = totalCount;
+      document.getElementById('stat-done').innerText = doneCount;
+      
+      if (currentRole === 'Dev') {
+          // Active count defined as issues created today for Dev
+          document.getElementById('stat-active').innerText = baseJiraContext.filter(t => t.created === todayStr).length;
+      } else {
+          document.getElementById('stat-active').innerText = activeCount;
+      }
+
+      document.getElementById('stat-value').innerText = `฿${totalValue.toLocaleString()}`;
+
+      renderStandardTable();
+      renderStandardCharts();
+      renderRecentTasks(filteredData);
+
+      // Render Top 5 priorities if Dev active
+      if (currentRole === 'Dev') {
+         renderDevPriorityList(baseJiraContext);
+      }
+    }
+
+    // --- Render standard Jira Table ---
+    function renderStandardTable() {
+      document.getElementById('table-header-row').innerHTML = `
+          <th class="p-3 pl-5 w-28">Key</th>
+          <th class="p-3">หัวข้อเรื่อง (Summary)</th>
+          <th class="p-3 w-28">ประเภท</th>
+          <th class="p-3 w-32">สถานะ</th>
+          <th class="p-3 w-40">ผู้รับผิดชอบ</th>
+          <th class="p-3 w-24 text-center">จัดการ</th>
+      `;
+      
+      const tableBody = document.getElementById('task-table-body');
+      tableBody.innerHTML = '';
+
+      if (filteredData.length === 0) {
+         tableBody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400">ไม่พบคิวงานในแผนก</td></tr>`;
+         updatePagination(0);
+         return;
+      }
+
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+
+      paginatedData.forEach(item => {
+         const row = document.createElement('tr');
+         row.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
+         
+         const badgeClass = item.status === 'เสร็จสิ้น' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
+         
+         let typeBadge = '';
+         if (item.type === 'Support') typeBadge = 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400';
+         else if (item.type === 'Install') typeBadge = 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400';
+         else typeBadge = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-355';
+
+         row.innerHTML = `
+             <td class="p-3 pl-5 font-semibold text-blue-500 dark:text-blue-400">${item.key}</td>
+             <td class="p-3 font-medium truncate max-w-xs text-slate-900 dark:text-white" title="${item.summary}">${item.summary}</td>
+             <td class="p-3"><span class="px-2 py-0.5 rounded-md text-xs font-semibold ${typeBadge}">${item.type}</span></td>
+             <td class="p-3"><span class="px-2 py-0.5 rounded-full text-xs font-semibold ${badgeClass}">${item.status}</span></td>
+             <td class="p-3 font-semibold text-xs"><i class="fa-solid fa-user text-slate-400 mr-1.5"></i>${item.assignee}</td>
+             <td class="p-3 text-center">
+                 <button onclick="openTaskDetail('${item.key}')" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white rounded-lg transition text-xs font-bold text-slate-600 dark:text-slate-300">
+                    <i class="fa-solid fa-eye"></i>
+                 </button>
+             </td>
+         `;
+         tableBody.appendChild(row);
+      });
+
+      updatePagination(filteredData.length);
+    }
+
+    // --- Render IT Support Sheets Table ---
+    function renderITTable() {
+      document.getElementById('table-header-row').innerHTML = `
+          <th class="p-3 pl-5">หัวข้อบริการไอที (Task Summary)</th>
+          <th class="p-3 w-32">Line ID ผู้แจ้ง</th>
+          <th class="p-3 w-28">ประเภท</th>
+          <th class="p-3 w-28">ความสำคัญ</th>
+          <th class="p-3 w-24">วันที่บันทึก</th>
+          <th class="p-3 w-32">สถานะตั๋วงาน</th>
+          <th class="p-3 w-24 text-center">รายละเอียด</th>
+      `;
+      
+      const tableBody = document.getElementById('task-table-body');
+      tableBody.innerHTML = '';
+
+      if (filteredData.length === 0) {
+         tableBody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">ไม่พบตั๋วงาน IT ในแผ่นงาน Google Sheets</td></tr>`;
+         updatePagination(0);
+         return;
+      }
+
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+
+      paginatedData.forEach(item => {
+         const row = document.createElement('tr');
+         row.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
+         
+         const badgeClass = item.status === 'เสร็จสิ้น' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
+         
+         let prioColor = '';
+         if (item.priority === 'High') prioColor = 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400';
+         else if (item.priority === 'Medium') prioColor = 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400';
+         else prioColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-350';
+
+         row.innerHTML = `
+             <td class="p-3 pl-5 font-bold text-slate-900 dark:text-white truncate max-w-xs" title="${item.name}">${item.name}</td>
+             <td class="p-3 font-semibold text-slate-500 dark:text-slate-400"><i class="fa-brands fa-line text-emerald-500 text-base mr-1.5 align-middle"></i>${item.lineId}</td>
+             <td class="p-3 text-xs font-semibold">${item.type}</td>
+             <td class="p-3"><span class="px-2 py-0.5 rounded-md text-xs font-bold ${prioColor}">${item.priority}</span></td>
+             <td class="p-3 text-slate-450 font-medium text-xs">${item.start}</td>
+             <td class="p-3"><span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${badgeClass}">${item.status}</span></td>
+             <td class="p-3 text-center">
+                 <button onclick="openITDetail('${item.id}')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white rounded-lg transition text-xs font-bold text-slate-600 dark:text-slate-300">
+                    <i class="fa-solid fa-pen-to-square"></i> ดู & แก้
+                 </button>
+             </td>
+         `;
+         tableBody.appendChild(row);
+      });
+
+      updatePagination(filteredData.length);
+    }
+
+    // --- Render Recent Tasks (Bottom panel quick queue) ---
+    function renderRecentTasks(dataList) {
+       const tbody = document.getElementById('recent-tasks-tbody');
+       tbody.innerHTML = "";
+       
+       const limitList = dataList.slice(0, 5);
+       if (limitList.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">ไม่มีคิวงานล่าสุด</td></tr>`;
+          return;
+       }
+       
+       limitList.forEach(item => {
+          const row = document.createElement('tr');
+          row.className = "border-t border-slate-100 dark:border-slate-800/40 text-xs";
+          
+          let title = item.summary || item.name;
+          let key = item.key || item.id;
+          let assignee = item.assignee || 'Sheet System';
+          
+          let typeBadge = '';
+          if (item.type === 'Support') typeBadge = 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400';
+          else if (item.type === 'Install') typeBadge = 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400';
+          else typeBadge = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-350';
+
+          const badgeClass = item.status === 'เสร็จสิ้น' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
+
+          row.innerHTML = `
+             <td class="p-3 pl-5 font-bold text-blue-500">${key}</td>
+             <td class="p-3 font-semibold text-slate-700 dark:text-slate-300 truncate max-w-xs">${title}</td>
+             <td class="p-3"><span class="px-1.5 py-0.5 rounded text-[10px] font-semibold ${typeBadge}">${item.type}</span></td>
+             <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${badgeClass}">${item.status}</span></td>
+             <td class="p-3 text-slate-450 font-medium">${assignee}</td>
+          `;
+          tbody.appendChild(row);
+       });
+    }
+
+    // --- Render Top 5 priorities for Developer view ---
+    function renderDevPriorityList(list) {
+       const listEl = document.getElementById('dev-priority-list');
+       listEl.innerHTML = "";
+       
+       // Sort issues by Highest priorities
+       const prioWeights = { highest: 4, critical: 4, high: 3, major: 3, medium: 2, low: 1, none: 0 };
+       const sorted = [...list].sort((a,b) => {
+          const wA = prioWeights[(a.priority || 'medium').toLowerCase()] || 2;
+          const wB = prioWeights[(b.priority || 'medium').toLowerCase()] || 2;
+          return wB - wA;
+       }).slice(0, 5);
+
+       if (sorted.length === 0) {
+          listEl.innerHTML = `<div class="p-4 text-center text-slate-400 text-xs">ไม่มีคิวงานเร่งด่วน</div>`;
+          return;
+       }
+
+       sorted.forEach((item, idx) => {
+          const div = document.createElement('div');
+          div.className = "flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-darkBorder rounded-xl hover:border-blue-500 hover:shadow-sm transition cursor-pointer";
+          div.onclick = () => openTaskDetail(item.key);
+          
+          let color = 'text-blue-500';
+          if (item.priority === 'High' || item.priority === 'Highest') color = 'text-rose-500';
+          
+          div.innerHTML = `
+             <div class="flex items-center gap-3">
+                <span class="w-6 h-6 rounded-lg bg-blue-50 dark:bg-slate-800 flex items-center justify-center font-bold text-xs text-blue-600">${idx+1}</span>
+                <span class="font-bold text-slate-900 dark:text-white text-sm">${item.key}</span>
+                <span class="text-slate-500 dark:text-slate-400 text-sm truncate max-w-md">${item.summary}</span>
+             </div>
+             <div class="flex items-center gap-3">
+                <span class="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-550">${item.project}</span>
+                <span class="text-xs font-extrabold ${color}"><i class="fa-solid fa-circle text-[8px] mr-1.5"></i>${item.priority}</span>
+             </div>
+          `;
+          listEl.appendChild(div);
+       });
+    }
+
+    // --- Pagination helpers ---
+    function updatePagination(totalItems) {
+       const start = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+       const end = Math.min(currentPage * itemsPerPage, totalItems);
+       document.getElementById('page-info').innerText = `แสดงผล ${start} ถึง ${end} จากทั้งหมด ${totalItems} รายการ`;
+       
+       document.getElementById('btn-prev').disabled = currentPage === 1;
+       document.getElementById('btn-next').disabled = currentPage * itemsPerPage >= totalItems;
+    }
+
+    // Pagination Click handler
+    function changePage(dir) {
+       currentPage += dir;
+       if (currentRole === 'ITSupport') renderITTable();
+       else renderStandardTable();
+    }
+
+    function handleFilterChange() {
+       currentPage = 1;
+       applyRoleFiltering();
+    }
+
+    // --- Special KPI Drilldown Clicks ---
+    function handleKPIBoxClick(type) {
+       if (currentRole === 'CEO') {
+          // Render Space Popups list for CEO
+          const tbody = document.getElementById('popup-space-tbody');
+          tbody.innerHTML = '';
+          
+          // Map spaces
+          let projMap = {};
+          rawJiraData.forEach(i => {
+              if(!projMap[i.project]) projMap[i.project] = { name: i.project, total:0, done:0 };
+              projMap[i.project].total++;
+              if(i.status === 'เสร็จสิ้น') projMap[i.project].done++;
+          });
+          let spaces = Object.values(projMap);
+          
+          if (type === 'active') spaces = spaces.filter(s => s.done < s.total);
+          else if (type === 'done') spaces = spaces.filter(s => s.done === s.total);
+          
+          if (spaces.length === 0) {
+             tbody.innerHTML = `<tr><td colspan="2" class="p-8 text-center text-slate-400">ไม่พบคิวงานในเงื่อนไข</td></tr>`;
+             openModal('ceoSpaceModal');
+             return;
+          }
+          
+          spaces.forEach(sp => {
+              const row = document.createElement('tr');
+              row.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer group transition-colors';
+              row.onclick = () => { closeModal('ceoSpaceModal'); setTimeout(() => openCEOTreeModal(sp.name, type), 200); };
+              row.innerHTML = `
+                 <td class="p-4 pl-5 font-bold text-slate-800 dark:text-white group-hover:text-blue-500 transition-colors"><i class="fa-solid fa-folder-open text-blue-400 mr-2"></i>${sp.name}</td>
+                 <td class="p-4 text-center font-semibold text-slate-600 dark:text-slate-350">${sp.done} / ${sp.total}</td>
+              `;
+              tbody.appendChild(row);
+          });
+          document.getElementById('ceo-spacelist-title').innerText = type === 'value' ? "สเปซโครงการและมูลค่าเป้าหมาย" : (type === 'active' ? "รายการสเปซที่ยังไม่เสร็จสิ้น" : "สเปซโครงการเสร็จสิ้น (สำเร็จ)");
+          openModal('ceoSpaceModal');
+          
+       } else if (['PM', 'SrDev'].includes(currentRole)) {
+          // Drilldown Space > Epic > Task layout modal for PM
+          openCEOTreeModal('all', type);
+       }
+    }
+
+    // --- Accordion Drilldown Space > Epic > Task Modal Render ---
+    function openCEOTreeModal(targetSpaceName, filterType) {
+       const container = document.getElementById('ceo-tree-container');
+       container.innerHTML = "";
+       
+       let spaceFiltered = [...rawJiraData];
+       if (targetSpaceName !== 'all') {
+          spaceFiltered = spaceFiltered.filter(i => i.project === targetSpaceName);
+       }
+       
+       // Group filtered tasks by project space
+       let spaceMap = {};
+       spaceFiltered.forEach(task => {
+          if (!spaceMap[task.project]) spaceMap[task.project] = [];
+          spaceMap[task.project].push(task);
+       });
+       
+       const spaceKeys = Object.keys(spaceMap);
+       if (spaceKeys.length === 0) {
+          container.innerHTML = `<p class="text-center text-slate-400 text-sm">ไม่พบคิวงานในแผนภูมิต้นไม้</p>`;
+          openModal('ceoTreeModal');
+          return;
+       }
+       
+       spaceKeys.forEach((spaceName, sIdx) => {
+          const spaceTasks = spaceMap[spaceName];
+          
+          // Render Space node (Accordion Item)
+          const spaceDiv = document.createElement('details');
+          spaceDiv.className = "mb-4 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-darkBorder rounded-2xl overflow-hidden shadow-sm group";
+          spaceDiv.open = sIdx === 0; // Open first item by default
+          
+          // Separate Epic simulated mapping group
+          let epicMap = {
+             "Epic Core Base Module": [],
+             "Epic User Interface Blueprint": [],
+             "Epic Support Handover System": []
+          };
+          
+          // Distribute tasks mock into epics based on key weights
+          spaceTasks.forEach((t, tIdx) => {
+             if (tIdx % 3 === 0) epicMap["Epic Core Base Module"].push(t);
+             else if (tIdx % 3 === 1) epicMap["Epic User Interface Blueprint"].push(t);
+             else epicMap["Epic Support Handover System"].push(t);
+          });
+          
+          let epicHTML = "";
+          Object.keys(epicMap).forEach((epicName, eIdx) => {
+             const epicTasks = epicMap[epicName].filter(t => {
+                if (filterType === 'active') return t.status !== 'เสร็จสิ้น';
+                if (filterType === 'done') return t.status === 'เสร็จสิ้น';
+                return true;
+             });
+             
+             if (epicTasks.length === 0) return;
+             
+             let taskHTML = "";
+             epicTasks.forEach(task => {
+                const badgeClass = task.status === 'เสร็จสิ้น' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
+                taskHTML += `
+                   <div onclick="closeModal('ceoTreeModal'); setTimeout(() => openTaskDetail('${task.key}'), 200);" class="flex items-center justify-between p-3.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer text-xs">
+                      <div class="flex items-center gap-2">
+                         <span class="font-bold text-blue-500">${task.key}</span>
+                         <span class="text-slate-600 dark:text-slate-350 font-medium truncate max-w-[200px] md:max-w-md">${task.summary}</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                         <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-450 font-semibold">${task.assignee}</span>
+                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${badgeClass}">${task.status}</span>
+                      </div>
+                   </div>
+                `;
+             });
+             
+             epicHTML += `
+                <div class="mt-2 pl-4 border-l-2 border-blue-500/30">
+                   <div class="p-2 bg-blue-50/50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-bold flex items-center justify-between">
+                      <span>⚡ ${epicName}</span>
+                      <span class="text-[10px] bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 rounded-full">${epicTasks.length} งาน</span>
+                   </div>
+                   <div class="divide-y divide-slate-100 dark:divide-slate-800 space-y-0.5 mt-1">
+                      ${taskHTML}
+                   </div>
+                </div>
+             `;
+          });
+
+          spaceDiv.innerHTML = `
+             <summary class="p-4 font-bold flex items-center justify-between cursor-pointer list-none select-none text-slate-800 dark:text-white">
+                <div class="flex items-center gap-2">
+                   <i class="fa-solid fa-folder text-yellow-500"></i>
+                   <span>สเปซ: ${spaceName}</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                   <span class="px-2 py-1 bg-slate-100 dark:bg-slate-850 rounded-lg">${spaceTasks.length} งาน</span>
+                   <i class="fa-solid fa-chevron-down group-open:rotate-180 transition-transform text-slate-450"></i>
+                </div>
+             </summary>
+             <div class="p-4 pt-0 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                ${epicHTML || '<p class="text-xs text-slate-400 text-center py-2">ไม่มีงานในสเปซโครงการ</p>'}
+             </div>
+          `;
+          container.appendChild(spaceDiv);
+       });
+       
+       document.getElementById('ceo-tree-title').innerText = filterType === 'active' ? "โครงสร้างคิวงานที่กำลังทำ (Active Tasks Tree)" : (filterType === 'done' ? "โครงสร้างความสำเร็จโครงการ (Completed Tree)" : "โครงสร้างโครงการทั้งหมด (Project Tree)");
+       openModal('ceoTreeModal');
+    }
+
+    // --- Task Details Modal Display (Jira standard) ---
+    function openTaskDetail(key) {
+       const task = rawJiraData.find(t => t.key === key);
+       if (!task) return;
+       
+       document.getElementById('modal-key').innerText = task.key;
+       document.getElementById('modal-key').className = "text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 rounded-md uppercase";
+       document.getElementById('modal-title').innerText = task.summary;
+       document.getElementById('modal-desc').innerText = task.desc;
+       document.getElementById('it-status-change').classList.add('hidden'); // Hide sheet specific changer
+       
+       const badgeClass = task.status === 'เสร็จสิ้น' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
+       
+       document.getElementById('modal-grid').innerHTML = `
+          <div class="flex flex-col p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+             <span class="text-slate-450 font-bold text-[10px] uppercase mb-1">สถานะโครงการ</span>
+             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold self-start ${badgeClass}">${task.status} (${task.rawStatus})</span>
+          </div>
+          <div class="flex flex-col p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+             <span class="text-slate-450 font-bold text-[10px] uppercase mb-1">ความสำคัญ (Priority)</span>
+             <span class="font-bold text-slate-800 dark:text-white text-xs">${task.priority}</span>
+          </div>
+          <div class="flex flex-col p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+             <span class="text-slate-450 font-bold text-[10px] uppercase mb-1">ผู้ดูแลรับผิดชอบ (Assignee)</span>
+             <span class="font-bold text-slate-850 dark:text-slate-300 text-xs">${task.assignee}</span>
+          </div>
+          <div class="flex flex-col p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+             <span class="text-slate-455 font-bold text-[10px] uppercase mb-1">มูลค่าโครงการ</span>
+             <span class="font-bold text-amber-500 text-xs">฿${task.value.toLocaleString()} THB</span>
+          </div>
+       `;
+       
+       openModal('detailModal');
+    }
+
+    // --- IT Support Details Modal Display (Sheet database) ---
+    let activeUpdatingITId = "";
+    
+    function openITDetail(id) {
+       const ticket = mockITData.find(t => t.id === id);
+       if (!ticket) return;
+       
+       activeUpdatingITId = id;
+       
+       document.getElementById('modal-key').innerText = ticket.id;
+       document.getElementById('modal-key').className = "text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md uppercase";
+       document.getElementById('modal-title').innerText = ticket.name;
+       document.getElementById('modal-desc').innerText = `อาการเสีย/ปัญหา:\n${ticket.prob}\n\nวิธีการจัดการแก้ไข:\n${ticket.sol}`;
+       
+       const badgeClass = ticket.status === 'เสร็จสิ้น' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
+
+       document.getElementById('modal-grid').innerHTML = `
+          <div class="flex flex-col p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+             <span class="text-slate-450 font-bold text-[10px] uppercase mb-1">สถานะตั๋วงาน</span>
+             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold self-start ${badgeClass}">${ticket.status}</span>
+          </div>
+          <div class="flex flex-col p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+             <span class="text-slate-450 font-bold text-[10px] uppercase mb-1">ผู้แจ้งเรื่อง (Line ID)</span>
+             <span class="font-bold text-slate-800 dark:text-white text-xs">${ticket.lineId}</span>
+          </div>
+          <div class="flex flex-col p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+             <span class="text-slate-450 font-bold text-[10px] uppercase mb-1">ระดับความเร่งด่วน</span>
+             <span class="font-bold text-slate-850 dark:text-slate-350 text-xs">${ticket.priority}</span>
+          </div>
+          <div class="flex flex-col p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+             <span class="text-slate-450 font-bold text-[10px] uppercase mb-1">ประเภทตั๋ว</span>
+             <span class="font-bold text-slate-800 dark:text-slate-200 text-xs">${ticket.type}</span>
+          </div>
+          <div class="flex flex-col p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+             <span class="text-slate-450 font-bold text-[10px] uppercase mb-1">วันที่สร้าง (Start)</span>
+             <span class="font-bold text-slate-600 dark:text-slate-400 text-xs">${ticket.start}</span>
+          </div>
+          <div class="flex flex-col p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+             <span class="text-slate-455 font-bold text-[10px] uppercase mb-1">กำหนดส่ง (Due Date)</span>
+             <span class="font-bold text-slate-600 dark:text-slate-400 text-xs">${ticket.due}</span>
+          </div>
+       `;
+       
+       // Setup status value inside updater select
+       document.getElementById('it-update-status').value = ticket.status;
+       document.getElementById('it-status-change').classList.remove('hidden'); // Show sheet specific changer panel
+       
+       openModal('detailModal');
+    }
+
+    function updateITStatus() {
+       const newStatus = document.getElementById('it-update-status').value;
+       mockITData = mockITData.map(ticket => {
+          if (ticket.id === activeUpdatingITId) {
+             return { ...ticket, status: newStatus };
+          }
+          return ticket;
+       });
+       
+       // Save to local Sheet proxy
+       localStorage.setItem('tasky_it_tickets', JSON.stringify(mockITData));
+       closeModal('detailModal');
+       
+       applyRoleFiltering();
+    }
+
+    // --- Save IT Ticket to sheets ---
+    function submitITTask() {
+       const name = document.getElementById('it-name').value;
+       const lineId = document.getElementById('it-line').value;
+       const type = document.getElementById('it-type').value;
+       const prob = document.getElementById('it-prob').value;
+       const sol = document.getElementById('it-sol').value;
+       const priority = document.getElementById('it-prio').value;
+       const start = document.getElementById('it-start').value || new Date().toISOString().substring(0, 10);
+       const due = document.getElementById('it-due').value || new Date().toISOString().substring(0, 10);
+
+       if (!name || !lineId || !prob) {
+          alert("กรุณากรอกข้อมูล ชื่องาน, Line ID, และปัญหาให้ครบถ้วน!");
+          return;
+       }
+
+       const newTicket = {
+          id: `TKT-${mockITData.length + 1}`,
+          name: name,
+          lineId: lineId,
+          type: type,
+          prob: prob,
+          sol: sol,
+          priority: priority,
+          status: "กำลังดำเนินการ",
+          start: start,
+          due: due
+       };
+
+       mockITData.unshift(newTicket);
+       localStorage.setItem('tasky_it_tickets', JSON.stringify(mockITData));
+       
+       // Reset form
+       document.getElementById('it-name').value = "";
+       document.getElementById('it-line').value = "";
+       document.getElementById('it-prob').value = "";
+       document.getElementById('it-sol').value = "";
+       
+       closeModal('itSupportTaskModal');
+       applyRoleFiltering();
+    }
+
+    // --- Save Meeting Calendar Sync ---
+    function submitMeeting() {
+       const type = document.getElementById('meet-type').value;
+       const title = document.getElementById('meet-topic').value;
+       const desc = document.getElementById('meet-desc').value;
+       const date = document.getElementById('meet-date').value;
+       const time = document.getElementById('meet-time').value;
+
+       if (!title || !date || !time) {
+          alert("กรุณากรอกหัวข้อประชุม วันที่ และเวลาให้ครบ!");
+          return;
+       }
+
+       const newMeeting = {
+          id: `${window.meetings.length + 1}`,
+          title: title,
+          desc: desc,
+          date: date,
+          time: time,
+          type: type
+       };
+
+       window.meetings.push(newMeeting);
+       localStorage.setItem('tasky_calendar_events', JSON.stringify(window.meetings));
+
+       // Reset fields
+       document.getElementById('meet-topic').value = "";
+       document.getElementById('meet-desc').value = "";
+       document.getElementById('meet-date').value = "";
+       document.getElementById('meet-time').value = "";
+
+       closeModal('meetingModal');
+       
+       if (currentTab === 'calendar') {
+          renderCalendarView();
+       }
+    }
+
+    // --- Render Calendar Calendar Grid ---
+    function renderCalendarView() {
+       const gridEl = document.getElementById('calendar-grid');
+       gridEl.innerHTML = "";
+       
+       const today = new Date();
+       const year = today.getFullYear();
+       const month = today.getMonth();
+       
+       // Update Month title in Thai
+       const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+       document.getElementById('calendar-month-title').innerText = `ปฏิทินนัดหมายการทำงาน ประจำเดือน ${monthNames[month]} ${year + 543}`;
+
+       // Calculate monthly offsets
+       const firstDayOffset = new Date(year, month, 1).getDay();
+       const totalDays = new Date(year, month + 1, 0).getDate();
+       
+       // Fill blank grids before 1st of month
+       for(let i=0; i<firstDayOffset; i++) {
+          const empty = document.createElement('div');
+          empty.className = "bg-slate-100/40 dark:bg-slate-900/10 min-h-[90px] border border-slate-200/50 dark:border-darkBorder/40 rounded-xl";
+          gridEl.appendChild(empty);
+       }
+
+       // Render calendar date grids
+       for(let day=1; day<=totalDays; day++) {
+          const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}`;
+          const isToday = day === today.getDate();
+          
+          const grid = document.createElement('div');
+          grid.className = `p-2 min-h-[90px] border border-slate-200 dark:border-darkBorder rounded-xl text-left flex flex-col gap-1.5 transition-all ${isToday ? 'bg-blue-50/50 dark:bg-blue-950/40 border-blue-500 shadow-sm' : 'bg-white dark:bg-darkCard'}`;
+          
+          grid.innerHTML = `<span class="text-xs font-bold ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}">${day}</span>`;
+          
+          // Map events related to date
+          const dateEvents = window.meetings.filter(m => m.date === dateStr);
+          dateEvents.forEach(evt => {
+             const tag = document.createElement('div');
+             const isOnline = evt.type === 'online';
+             tag.className = `p-1 rounded text-[9px] font-bold truncate leading-tight select-none border ${isOnline ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-400' : 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-950/30 dark:border-purple-800 dark:text-purple-400'}`;
+             tag.innerText = `⏰ ${evt.time} | ${evt.title}`;
+             tag.title = `${evt.title} (${evt.desc || 'ไม่มีรายละเอียด'})`;
+             grid.appendChild(tag);
+          });
+          
+          gridEl.appendChild(grid);
+       }
+    }
+
+    // --- Chart.js Data Visualizations ---
+    function rebuildCharts() {
+       if (currentRole === 'CEO') {
+          renderCEOCharts();
+       } else if (currentRole === 'ITSupport') {
+          renderITCharts();
+       } else {
+          renderStandardCharts();
+       }
+    }
+
+    function destroyCharts() {
+       if(chart1Instance) { chart1Instance.destroy(); chart1Instance = null; }
+       if(chart2Instance) { chart2Instance.destroy(); chart2Instance = null; }
+       if(chart3Instance) { chart3Instance.destroy(); chart3Instance = null; }
+    }
+
+    function getThemeTextColor() {
+       return document.documentElement.classList.contains('dark') ? '#94a3b8' : '#475569';
+    }
+
+    function renderCEOCharts() {
+       destroyCharts();
+       
+       const txtColor = getThemeTextColor();
+       document.getElementById('chart-title-1').innerText = "เป้าหมายมูลค่างานสะสมขององค์กร (Target: 5,000,000 THB)";
+       document.getElementById('chart-title-2').innerText = "แนวโน้มยอดขายและมูลค่าโครงการรายสเปซ";
+       
+       // Calculate aggregates
+       let totalValue = 0;
+       rawJiraData.filter(i => selectedCEOSpaces.includes(i.project)).forEach(item => totalValue += item.value);
+
+       // Chart 1: Gauge (Semi-donut) for target limit
+       const ctx1 = document.getElementById('chart1').getContext('2d');
+       chart1Instance = new Chart(ctx1, {
+          type: 'doughnut',
+          data: {
+             labels: ['มูลค่าสะสม', 'เป้าหมายที่เหลือ'],
+             datasets: [{
+                data: [totalValue, Math.max(5000000 - totalValue, 0)],
+                backgroundColor: ['#f59e0b', '#cbd5e1'],
+                borderWidth: 0
+             }]
+          },
+          options: {
+             rotation: -90,
+             circumference: 180,
+             cutout: '80%',
+             plugins: {
+                legend: { display: false }
+             }
+          }
+       });
+
+       // Chart 2: Cumulative trend line chart
+       const ctx2 = document.getElementById('chart2').getContext('2d');
+       chart2Instance = new Chart(ctx2, {
+          type: 'line',
+          data: {
+             labels: ['ม.ค.', 'มี.ค.', 'พ.ค.', 'ก.ค.', 'ก.ย.', 'พ.ย.'],
+             datasets: [{
+                label: 'ยอดสะสมโครงการ',
+                data: [500000, 1200000, 1800000, 2400000, 3100000, totalValue],
+                borderColor: '#2ea2f8',
+                backgroundColor: 'rgba(46, 162, 248, 0.1)',
+                fill: true,
+                tension: 0.4
+             }]
+          },
+          options: {
+             responsive: true,
+             maintainAspectRatio: false,
+             scales: {
+                x: { ticks: { color: txtColor } },
+                y: { ticks: { color: txtColor } }
+             }
+          }
+       });
+
+       // Chart 3: Status donut for CEO
+       const ctx3 = document.getElementById('chart3').getContext('2d');
+       let tOpen = filteredData.filter(t => t.status === 'กำลังดำเนินการ').length;
+       let tDone = filteredData.filter(t => t.status === 'เสร็จสิ้น').length;
+       
+       chart3Instance = new Chart(ctx3, {
+          type: 'pie',
+          data: {
+             labels: ['กำลังดำเนินการ', 'เสร็จสิ้น'],
+             datasets: [{
+                data: [tOpen, tDone],
+                backgroundColor: ['#2ea2f8', '#10b981'],
+                borderWidth: 0
+             }]
+          },
+          options: {
+             responsive: true,
+             maintainAspectRatio: false,
+             plugins: {
+                legend: { position: 'bottom', labels: { color: txtColor } }
+             }
+          }
+       });
+    }
+
+    function renderStandardCharts() {
+       destroyCharts();
+       const txtColor = getThemeTextColor();
+       
+       document.getElementById('chart-title-1').innerText = "สัดส่วนสถานะงานดำเนินงานภาพรวม";
+       document.getElementById('chart-title-2').innerText = "สัดส่วนระดับความเร่งด่วน (Priority)";
+       
+       let tOpen = filteredData.filter(t => t.status === 'กำลังดำเนินการ').length;
+       let tDone = filteredData.filter(t => t.status === 'เสร็จสิ้น').length;
+
+       const ctx1 = document.getElementById('chart1').getContext('2d');
+       chart1Instance = new Chart(ctx1, {
+          type: 'doughnut',
+          data: {
+             labels: ['กำลังดำเนินการ', 'เสร็จสิ้น'],
+             datasets: [{
+                data: [tOpen, tDone],
+                backgroundColor: ['#2ea2f8', '#10b981'],
+                borderWidth: 0
+             }]
+          },
+          options: {
+             responsive: true,
+             maintainAspectRatio: false,
+             plugins: {
+                legend: { position: 'bottom', labels: { color: txtColor } }
+             }
+          }
+       });
+
+       let highest = filteredData.filter(t => t.priority === 'High' || t.priority === 'Highest').length;
+       let medium = filteredData.filter(t => t.priority === 'Medium').length;
+       let low = filteredData.filter(t => t.priority === 'Low').length;
+
+       const ctx2 = document.getElementById('chart2').getContext('2d');
+       chart2Instance = new Chart(ctx2, {
+          type: 'bar',
+          data: {
+             labels: ['High', 'Medium', 'Low'],
+             datasets: [{
+                label: 'จำนวนงาน',
+                data: [highest, medium, low],
+                backgroundColor: ['#ef4444', '#f59e0b', '#94a3b8']
+             }]
+          },
+          options: {
+             responsive: true,
+             maintainAspectRatio: false,
+             scales: {
+                x: { ticks: { color: txtColor } },
+                y: { ticks: { color: txtColor } }
+             }
+          }
+       });
+    }
+
+    function renderITCharts() {
+       destroyCharts();
+       const txtColor = getThemeTextColor();
+
+       document.getElementById('chart-title-1').innerText = "สัดส่วนปิดงาน IT Support";
+       document.getElementById('chart-title-2').innerText = "ความเร่งด่วนตั๋วช่วยเหลือไอที";
+
+       let tOpen = filteredData.filter(t => t.status === 'กำลังดำเนินการ').length;
+       let tDone = filteredData.filter(t => t.status === 'เสร็จสิ้น').length;
+
+       const ctx1 = document.getElementById('chart1').getContext('2d');
+       chart1Instance = new Chart(ctx1, {
+          type: 'pie',
+          data: {
+             labels: ['กำลังดำเนินการ', 'เสร็จสิ้น'],
+             datasets: [{
+                data: [tOpen, tDone],
+                backgroundColor: ['#3b82f6', '#10b981'],
+                borderWidth: 0
+             }]
+          },
+          options: {
+             responsive: true,
+             maintainAspectRatio: false,
+             plugins: {
+                legend: { position: 'bottom', labels: { color: txtColor } }
+             }
+          }
+       });
+
+       let high = filteredData.filter(t => t.priority === 'High').length;
+       let medium = filteredData.filter(t => t.priority === 'Medium').length;
+       let low = filteredData.filter(t => t.priority === 'Low').length;
+
+       const ctx2 = document.getElementById('chart2').getContext('2d');
+       chart2Instance = new Chart(ctx2, {
+          type: 'bar',
+          data: {
+             labels: ['High', 'Medium', 'Low'],
+             datasets: [{
+                label: 'จำนวนตั๋วงาน',
+                data: [high, medium, low],
+                backgroundColor: ['#f43f5e', '#fbbf24', '#cbd5e1']
+             }]
+          },
+          options: {
+             responsive: true,
+             maintainAspectRatio: false,
+             scales: {
+                x: { ticks: { color: txtColor } },
+                y: { ticks: { color: txtColor } }
+             }
+          }
+       });
+    }
+
+    // --- Modal Opening helpers ---
+    function openModal(id) {
+       const modal = document.getElementById(id);
+       modal.classList.remove('hidden');
+       setTimeout(() => {
+          modal.firstElementChild.classList.replace('scale-95', 'scale-100');
+       }, 50);
+    }
+
+    function closeModal(id) {
+       const modal = document.getElementById(id);
+       modal.firstElementChild.classList.replace('scale-100', 'scale-95');
+       setTimeout(() => {
+          modal.classList.add('hidden');
+       }, 150);
+    }
+  </script>
+</body>
+</html>
