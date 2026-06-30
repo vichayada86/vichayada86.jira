@@ -259,6 +259,58 @@
           </div>
         </section>
 
+        <!-- Kanban Board for Developer Role -->
+        <section id="dev-kanban-section" class="hidden space-y-4">
+           <div class="flex items-center justify-between">
+              <h4 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                 <i class="fa-solid fa-table-columns text-blue-500"></i> กระดานคิวงานพัฒนา (Kanban Board)
+              </h4>
+              <span id="kanban-filter-desc" class="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg font-medium">งานทั้งหมด</span>
+           </div>
+           
+           <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-start">
+              <!-- PLANING Column -->
+              <div ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropCard(event, 'PLANING')" class="bg-slate-100/40 dark:bg-slate-800/10 border border-slate-200 dark:border-darkBorder rounded-2xl p-4 flex flex-col min-h-[500px] transition-all">
+                 <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-205 dark:border-slate-800/60">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">PLANING <span id="count-planing" class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px] text-slate-600 dark:text-slate-400">0</span></span>
+                 </div>
+                 <div id="col-planing" class="space-y-3 flex-1"></div>
+              </div>
+
+              <!-- DISIGE Column -->
+              <div ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropCard(event, 'DISIGE')" class="bg-slate-100/40 dark:bg-slate-800/10 border border-slate-200 dark:border-darkBorder rounded-2xl p-4 flex flex-col min-h-[500px] transition-all">
+                 <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-205 dark:border-slate-800/60">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">DISIGE <span id="count-disige" class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px] text-slate-600 dark:text-slate-400">0</span></span>
+                 </div>
+                 <div id="col-disige" class="space-y-3 flex-1"></div>
+              </div>
+
+              <!-- CODE Column -->
+              <div ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropCard(event, 'CODE')" class="bg-slate-100/40 dark:bg-slate-800/10 border border-slate-200 dark:border-darkBorder rounded-2xl p-4 flex flex-col min-h-[500px] transition-all">
+                 <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-205 dark:border-slate-800/60">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">CODE <span id="count-code" class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px] text-slate-600 dark:text-slate-400">0</span></span>
+                 </div>
+                 <div id="col-code" class="space-y-3 flex-1"></div>
+              </div>
+
+              <!-- TEST Column -->
+              <div ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropCard(event, 'TEST')" class="bg-slate-100/40 dark:bg-slate-800/10 border border-slate-200 dark:border-darkBorder rounded-2xl p-4 flex flex-col min-h-[500px] transition-all">
+                 <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-205 dark:border-slate-850">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">TEST <span id="count-test" class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px] text-slate-600 dark:text-slate-400">0</span></span>
+                 </div>
+                 <div id="col-test" class="space-y-3 flex-1"></div>
+              </div>
+
+              <!-- DONE Column -->
+              <div ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropCard(event, 'DONE')" class="bg-slate-100/40 dark:bg-slate-800/10 border border-slate-200 dark:border-darkBorder rounded-2xl p-4 flex flex-col min-h-[500px] transition-all">
+                 <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-205 dark:border-slate-850">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">DONE <span id="count-done" class="bg-emerald-100 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded text-[10px] text-emerald-600 dark:text-emerald-400">✓</span></span>
+                 </div>
+                 <div id="col-done" class="space-y-3 flex-1"></div>
+              </div>
+           </div>
+        </section>
+
         <!-- Top Priority List for Developer view -->
         <section id="dev-priority-section" class="hidden bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm">
            <h4 class="text-base font-bold mb-4 text-slate-900 dark:text-white"><i class="fa-solid fa-circle-exclamation text-rose-500 mr-2"></i>งานเร่งด่วนที่สุด 5 อันดับแรก (ตามความสำคัญ)</h4>
@@ -436,8 +488,11 @@
           <div id="modal-desc" class="text-sm bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-darkBorder whitespace-pre-wrap leading-relaxed text-slate-700 dark:text-slate-300"></div>
         </div>
       </div>
-      <div class="p-4 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-darkBorder flex justify-end">
-        <button onclick="closeModal('detailModal')" class="px-4 py-2 bg-slate-200 hover:bg-slate-350 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl font-medium text-xs text-slate-800 dark:text-white">ปิดหน้าต่าง</button>
+      <div class="p-4 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-darkBorder flex justify-between items-center">
+        <a id="modal-jira-link" href="#" target="_blank" class="hidden px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-xs transition shadow-md flex items-center gap-1.5">
+          <i class="fa-brands fa-jira text-sm"></i> เปิดใน Jira
+        </a>
+        <button onclick="closeModal('detailModal')" class="px-4 py-2 bg-slate-200 hover:bg-slate-350 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl font-medium text-xs text-slate-800 dark:text-white ml-auto">ปิดหน้าต่าง</button>
       </div>
     </div>
   </div>
@@ -658,6 +713,7 @@
               assignee: item.assignee || "Unassigned",
               priority: item.priority || "Medium",
               created: item.created ? item.created.substring(0, 10) : new Date().toISOString().substring(0, 10),
+              link: item.link || `https://vichayada.atlassian.net/browse/${item.key}`,
               desc: `ลิงก์ Jira: ${item.link || '#'}\n\nรายละเอียดเพิ่มเติมเกี่ยวกับการปฏิบัติงานและพัฒนาโครงการระดับองค์กร`,
               value: val
             };
@@ -703,6 +759,7 @@
               assignee: assignees[i % assignees.length],
               priority: prioNum === 0 ? 'High' : (prioNum === 1 ? 'Medium' : 'Low'),
               created: i%2 === 0 ? todayStr : '2026-06-15',
+              link: `https://vichayada.atlassian.net/browse/TAS-${i.toString().padStart(3,'0')}`,
               desc: 'รายละเอียดจำลองการทำงานของระบบควบคุมคิวตั๋วงาน Jira Cloud...',
               value: prioNum === 0 ? 100000 : (prioNum === 1 ? 50000 : 25000)
           });
@@ -812,6 +869,8 @@
       document.getElementById('recent-tasks-panel').classList.remove('hidden');
       document.getElementById('dev-priority-section').classList.add('hidden');
       document.getElementById('kpi-reset-subtext').classList.add('hidden');
+      document.getElementById('dev-kanban-section').classList.add('hidden');
+      document.getElementById('charts-section').classList.remove('hidden');
       
       // Expand grid config for charts
       document.getElementById('chart-container-3').classList.add('hidden');
@@ -852,7 +911,9 @@
         case 'Dev':
           headerTitle = "⚙️ กระดานงานส่วนบุคคล (Developer Board)";
           document.getElementById('dev-team-menu').classList.remove('hidden');
-          document.getElementById('dev-priority-section').classList.remove('hidden');
+          document.getElementById('dev-kanban-section').classList.remove('hidden');
+          document.getElementById('charts-section').classList.add('hidden');
+          document.getElementById('recent-tasks-panel').classList.add('hidden');
           
           setKPILabels("-", "งานทั้งหมด", "ความเคลื่อนไหววันนี้", "งานเสร็จสิ้น");
           updateDevSidebarStyles();
@@ -1063,13 +1124,12 @@
 
       document.getElementById('stat-value').innerText = `฿${totalValue.toLocaleString()}`;
 
-      renderStandardTable();
-      renderStandardCharts();
-      renderRecentTasks(filteredData);
-
-      // Render Top 5 priorities if Dev active
       if (currentRole === 'Dev') {
-         renderDevPriorityList(baseJiraContext);
+         renderKanbanBoard(filteredData);
+      } else {
+         renderStandardTable();
+         renderStandardCharts();
+         renderRecentTasks(filteredData);
       }
     }
 
@@ -1463,7 +1523,12 @@
           </div>
        `;
        
-       openModal('detailModal');
+       const jiraLinkBtn = document.getElementById('modal-jira-link');
+        if (jiraLinkBtn) {
+           jiraLinkBtn.href = task.link || `https://vichayada.atlassian.net/browse/${task.key}`;
+           jiraLinkBtn.classList.remove('hidden');
+        }
+        openModal('detailModal');
     }
 
     // --- IT Support Details Modal Display (Sheet database) ---
@@ -1513,7 +1578,9 @@
        document.getElementById('it-update-status').value = ticket.status;
        document.getElementById('it-status-change').classList.remove('hidden'); // Show sheet specific changer panel
        
-       openModal('detailModal');
+       const jiraLinkBtn = document.getElementById('modal-jira-link');
+        if (jiraLinkBtn) jiraLinkBtn.classList.add('hidden');
+        openModal('detailModal');
     }
 
     function updateITStatus() {
@@ -1875,6 +1942,227 @@
              }
           }
        });
+    }
+
+    // --- Developer Kanban Board Render functions ---
+    function renderKanbanBoard(data) {
+       const colPlaning = document.getElementById('col-planing');
+       const colDisige = document.getElementById('col-disige');
+       const colCode = document.getElementById('col-code');
+       const colTest = document.getElementById('col-test');
+       const colDone = document.getElementById('col-done');
+       
+       colPlaning.innerHTML = "";
+       colDisige.innerHTML = "";
+       colCode.innerHTML = "";
+       colTest.innerHTML = "";
+       colDone.innerHTML = "";
+       
+       let countPlaning = 0;
+       let countDisige = 0;
+       let countCode = 0;
+       let countTest = 0;
+       let countDone = 0;
+       
+       const descEl = document.getElementById('kanban-filter-desc');
+       if (currentDevAssignee === 'all') {
+          descEl.innerText = "👥 งานของทุกคน (Everyone's Tasks)";
+       } else {
+          descEl.innerText = `👤 งานของ: ${currentDevAssignee}`;
+       }
+       
+       data.forEach(task => {
+          const column = getKanbanColumn(task.rawStatus, task.summary);
+          
+          let avatarChar = "U";
+          let avatarClass = "bg-slate-200 text-slate-600";
+          const ass = (task.assignee || '').toLowerCase();
+          if (ass.includes('may') || ass.includes('เมย์') || ass.includes('วิชญาดา')) {
+             avatarChar = "M";
+             avatarClass = "bg-pink-100 text-pink-600 dark:bg-pink-950/40 dark:text-pink-400";
+          } else if (ass.includes('tawan') || ass.includes('ตะวัน') || ass.includes('ภัครพงษ์')) {
+             avatarChar = "T";
+             avatarClass = "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400";
+          }
+          
+          let dateFormatted = task.created;
+          try {
+             const dateObj = new Date(task.created);
+             if (!isNaN(dateObj)) {
+                dateFormatted = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+             }
+          } catch(e) {}
+          
+          const cardHTML = `
+             <div draggable="true" ondragstart="dragCard(event, '${task.key}')" ondragend="dragEndCard(event)" onclick="openTaskDetail('${task.key}')" class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-blue-500 hover:-translate-y-0.5 transition-all cursor-pointer flex flex-col gap-2 group active:cursor-grabbing">
+                <h5 class="font-bold text-slate-850 dark:text-slate-200 text-xs line-clamp-2 group-hover:text-blue-500 transition-colors">
+                   [${task.key}] ${task.summary}
+                </h5>
+                
+                <span class="bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400 text-[9px] px-2 py-0.5 rounded font-bold self-start uppercase">
+                   ${task.type}
+                </span>
+                
+                <div class="border border-rose-200 text-rose-600 bg-rose-50/50 dark:bg-rose-950/20 dark:border-rose-900 text-[10px] px-2 py-1 rounded-lg font-semibold inline-flex items-center gap-1 self-start">
+                   <i class="fa-solid fa-triangle-exclamation"></i> ${dateFormatted}
+                </div>
+                
+                <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-2 mt-1">
+                   <span class="text-[10px] text-blue-600 dark:text-blue-450 font-bold flex items-center">
+                      <i class="fa-regular fa-square-check text-blue-500 mr-1.5 text-xs"></i> ${task.key}
+                   </span>
+                   <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${avatarClass}" title="${task.assignee}">
+                      ${avatarChar}
+                   </div>
+                </div>
+             </div>
+          `;
+          
+          if (column === 'PLANING') {
+             colPlaning.insertAdjacentHTML('beforeend', cardHTML);
+             countPlaning++;
+          } else if (column === 'DISIGE') {
+             colDisige.insertAdjacentHTML('beforeend', cardHTML);
+             countDisige++;
+          } else if (column === 'CODE') {
+             colCode.insertAdjacentHTML('beforeend', cardHTML);
+             countCode++;
+          } else if (column === 'TEST') {
+             colTest.insertAdjacentHTML('beforeend', cardHTML);
+             countTest++;
+          } else if (column === 'DONE') {
+             colDone.insertAdjacentHTML('beforeend', cardHTML);
+             countDone++;
+          }
+       });
+       
+       document.getElementById('count-planing').innerText = countPlaning;
+       document.getElementById('count-disige').innerText = countDisige;
+       document.getElementById('count-code').innerText = countCode;
+       document.getElementById('count-test').innerText = countTest;
+       
+       if (countPlaning === 0) colPlaning.innerHTML = `<p class="text-[10px] text-slate-400 text-center py-6 border border-dashed rounded-xl dark:border-slate-800">ไม่มีงาน</p>`;
+       if (countDisige === 0) colDisige.innerHTML = `<p class="text-[10px] text-slate-400 text-center py-6 border border-dashed rounded-xl dark:border-slate-800">ไม่มีงาน</p>`;
+       if (countCode === 0) colCode.innerHTML = `<p class="text-[10px] text-slate-400 text-center py-6 border border-dashed rounded-xl dark:border-slate-800">ไม่มีงาน</p>`;
+       if (countTest === 0) colTest.innerHTML = `<p class="text-[10px] text-slate-400 text-center py-6 border border-dashed rounded-xl dark:border-slate-800">ไม่มีงาน</p>`;
+       if (countDone === 0) colDone.innerHTML = `<p class="text-[10px] text-slate-400 text-center py-6 border border-dashed rounded-xl dark:border-slate-800">ไม่มีงาน</p>`;
+    }
+
+    function getKanbanColumn(rawStatus, summary) {
+       const status = (rawStatus || '').toLowerCase();
+       const title = (summary || '').toLowerCase();
+       
+       if (['done', 'completed', 'เสร็จสิ้น', 'resolved', 'close', 'closed'].includes(status)) {
+          return 'DONE';
+       }
+       
+       if (status.includes('test') || status.includes('qa') || status.includes('verify') || title.includes('test') || title.includes('ทดสอบ')) {
+          return 'TEST';
+       }
+       
+       if (status.includes('progress') || status.includes('coding') || status.includes('dev') || status.includes('doing') || status.includes('in progress') || title.includes('พัฒนา') || title.includes('แก้') || title.includes('เขียน')) {
+          return 'CODE';
+       }
+       
+       if (status.includes('design') || status.includes('review') || status.includes('ui') || title.includes('ออกแบบ') || title.includes('design') || status.includes('disige')) {
+          return 'DISIGE';
+       }
+       
+       return 'PLANING';
+    }
+
+    // --- Kanban Drag & Drop handlers ---
+    function allowDrop(ev) {
+       ev.preventDefault();
+    }
+
+    function dragCard(ev, key) {
+       ev.dataTransfer.setData("taskKey", key);
+       ev.currentTarget.classList.add('opacity-40');
+    }
+
+    function dragEndCard(ev) {
+       ev.currentTarget.classList.remove('opacity-40');
+    }
+
+    function dragEnterCol(ev) {
+       ev.currentTarget.classList.add('bg-blue-50/10', 'border-blue-500/30');
+    }
+
+    function dragLeaveCol(ev) {
+       ev.currentTarget.classList.remove('bg-blue-50/10', 'border-blue-500/30');
+    }
+
+    async function dropCard(ev, targetColumn) {
+       ev.preventDefault();
+       ev.currentTarget.classList.remove('bg-blue-50/10', 'border-blue-500/30');
+       
+       const key = ev.dataTransfer.getData("taskKey");
+       if (!key) return;
+       
+       const task = rawJiraData.find(t => t.key === key);
+       if (!task) return;
+       
+       let newRawStatus = "To Do";
+       let newMappedStatus = "กำลังดำเนินการ";
+       
+       if (targetColumn === 'PLANING') {
+          newRawStatus = "To Do";
+          newMappedStatus = "กำลังดำเนินการ";
+       } else if (targetColumn === 'DISIGE') {
+          newRawStatus = "In Review";
+          newMappedStatus = "กำลังดำเนินการ";
+       } else if (targetColumn === 'CODE') {
+          newRawStatus = "In Progress";
+          newMappedStatus = "กำลังดำเนินการ";
+       } else if (targetColumn === 'TEST') {
+          newRawStatus = "Testing";
+          newMappedStatus = "กำลังดำเนินการ";
+       } else if (targetColumn === 'DONE') {
+          newRawStatus = "Done";
+          newMappedStatus = "เสร็จสิ้น";
+       }
+       
+       const oldRawStatus = task.rawStatus;
+       const oldMappedStatus = task.status;
+       
+       // Update UI state immediately (optimistic update)
+       task.rawStatus = newRawStatus;
+       task.status = newMappedStatus;
+       applyRoleFiltering();
+       
+       const payload = {
+          action: "transition",
+          issueKey: key,
+          targetStatus: newRawStatus
+       };
+       
+       document.getElementById('current-role-desc').innerText = `กำลังบันทึกความเปลี่ยนแปลงของงาน ${key} ไปยัง Jira...`;
+       
+       try {
+          const response = await fetch(APPS_SCRIPT_URL, {
+             method: 'POST',
+             headers: {
+                'Content-Type': 'text/plain'
+             },
+             body: JSON.stringify(payload)
+          });
+          const res = await response.json();
+          
+          if (res && res.status === 'success') {
+             document.getElementById('current-role-desc').innerText = `อัปเดตสถานะ ${key} ลง Jira สำเร็จ! (เวลา: ${new Date().toLocaleTimeString('th-TH')} น.)`;
+          } else {
+             console.error("Jira API transition failed:", res);
+             alert(`ไม่สามารถย้ายขั้นตอนงาน ${key} บน Jira ได้:\n${res.message || 'ไม่มีรายละเอียดเพิ่มเติม'}`);
+             task.rawStatus = oldRawStatus;
+             task.status = oldMappedStatus;
+             applyRoleFiltering();
+             document.getElementById('current-role-desc').innerText = `ย้ายงานล้มเหลว: Jira ปฏิเสธการเปลี่ยนสถานะของ ${key}`;
+          }
+       } catch (err) {
+          console.error("Network error updating Jira:", err);
+          document.getElementById('current-role-desc').innerText = `ย้ายงานล้มเหลว: เกิดปัญหาการเชื่อมต่อเครือข่าย (ข้อมูลเปลี่ยนชั่วคราว)`;
+       }
     }
 
     // --- Modal Opening helpers ---
