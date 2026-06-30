@@ -1112,7 +1112,11 @@
          else activeCount++;
       });
 
-      document.getElementById('stat-total').innerText = totalCount;
+      if (currentRole === 'Dev') {
+         document.getElementById('stat-total').innerText = totalCount - doneCount;
+      } else {
+         document.getElementById('stat-total').innerText = totalCount;
+      }
       document.getElementById('stat-done').innerText = doneCount;
       
       if (currentRole === 'Dev') {
