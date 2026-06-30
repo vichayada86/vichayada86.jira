@@ -844,7 +844,7 @@
           document.getElementById('btn-schedule').classList.remove('hidden');
           
           document.getElementById('btn-create-task-text').innerText = "สร้างงาน Jira";
-          document.getElementById('btn-create-task').onclick = () => window.open(`https://${JIRA_CONFIG.DOMAIN}/jira/for-you`, "_blank");
+          document.getElementById('btn-create-task').onclick = () => window.open("https://vichayada.atlassian.net/jira/for-you", "_blank");
           
           setKPILabels("-", "งานทั้งหมดในระบบ", "กำลังดำเนินการ", "เสร็จสิ้น");
           break;
