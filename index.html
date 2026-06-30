@@ -274,7 +274,7 @@
                  <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-205 dark:border-slate-800/60">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">PLANING <span id="count-planing" class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px] text-slate-600 dark:text-slate-400">0</span></span>
                  </div>
-                 <div id="col-planing" class="space-y-3 flex-1"></div>
+                 <div id="col-planing" class="space-y-3 flex-1 max-h-[725px] overflow-y-auto pr-1"></div>
               </div>
 
               <!-- DISIGE Column -->
@@ -282,7 +282,7 @@
                  <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-205 dark:border-slate-800/60">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">DISIGE <span id="count-disige" class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px] text-slate-600 dark:text-slate-400">0</span></span>
                  </div>
-                 <div id="col-disige" class="space-y-3 flex-1"></div>
+                 <div id="col-disige" class="space-y-3 flex-1 max-h-[725px] overflow-y-auto pr-1"></div>
               </div>
 
               <!-- CODE Column -->
@@ -290,7 +290,7 @@
                  <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-205 dark:border-slate-800/60">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">CODE <span id="count-code" class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px] text-slate-600 dark:text-slate-400">0</span></span>
                  </div>
-                 <div id="col-code" class="space-y-3 flex-1"></div>
+                 <div id="col-code" class="space-y-3 flex-1 max-h-[725px] overflow-y-auto pr-1"></div>
               </div>
 
               <!-- TEST Column -->
@@ -298,7 +298,7 @@
                  <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-205 dark:border-slate-850">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">TEST <span id="count-test" class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px] text-slate-600 dark:text-slate-400">0</span></span>
                  </div>
-                 <div id="col-test" class="space-y-3 flex-1"></div>
+                 <div id="col-test" class="space-y-3 flex-1 max-h-[725px] overflow-y-auto pr-1"></div>
               </div>
 
               <!-- DONE Column -->
@@ -306,7 +306,7 @@
                  <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-205 dark:border-slate-850">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">DONE <span id="count-done" class="bg-emerald-100 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded text-[10px] text-emerald-600 dark:text-emerald-400">✓</span></span>
                  </div>
-                 <div id="col-done" class="space-y-3 flex-1"></div>
+                 <div id="col-done" class="space-y-3 flex-1 max-h-[725px] overflow-y-auto pr-1"></div>
               </div>
            </div>
         </section>
@@ -377,9 +377,10 @@
           <!-- Pagination -->
           <div id="pagination-section" class="p-4 flex justify-between items-center border-t border-slate-100 dark:border-darkBorder bg-slate-50/50 dark:bg-slate-800/20">
             <span id="page-info" class="text-xs text-slate-500">แสดงผล 0 ถึง 0</span>
-            <div class="flex gap-2">
-              <button onclick="changePage(-1)" id="btn-prev" class="px-3 py-1.5 text-xs bg-white dark:bg-slate-850 border border-slate-200 dark:border-darkBorder rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 transition text-slate-800 dark:text-white">ก่อนหน้า</button>
-              <button onclick="changePage(1)" id="btn-next" class="px-3 py-1.5 text-xs bg-white dark:bg-slate-850 border border-slate-200 dark:border-darkBorder rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 transition text-slate-800 dark:text-white">ถัดไป</button>
+            <div class="flex items-center gap-4">
+              <button onclick="changePage(-1)" id="btn-prev" class="px-2.5 py-1.5 text-xs bg-white dark:bg-slate-850 border border-slate-200 dark:border-darkBorder rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 transition text-slate-800 dark:text-white"><i class="fa-solid fa-chevron-left"></i></button>
+              <div id="pagination-dots" class="flex gap-1.5 items-center"></div>
+              <button onclick="changePage(1)" id="btn-next" class="px-2.5 py-1.5 text-xs bg-white dark:bg-slate-850 border border-slate-200 dark:border-darkBorder rounded-lg font-medium hover:bg-slate-50 disabled:opacity-40 transition text-slate-800 dark:text-white"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
           </div>
         </section>
@@ -1335,6 +1336,24 @@
        
        document.getElementById('btn-prev').disabled = currentPage === 1;
        document.getElementById('btn-next').disabled = currentPage * itemsPerPage >= totalItems;
+       
+       // วาดจุดไข่ปลา (Pagination Dots)
+       const dotsContainer = document.getElementById('pagination-dots');
+       if (dotsContainer) {
+          const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+          dotsContainer.innerHTML = '';
+          for (let i = 1; i <= totalPages; i++) {
+             const dot = document.createElement('button');
+             dot.className = `rounded-full transition-all duration-300 ${i === currentPage ? 'bg-blue-600 dark:bg-blue-500 w-2.5 h-2.5 scale-110 shadow-sm shadow-blue-500/20' : 'bg-slate-350 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-600 w-1.5 h-1.5'}`;
+             dot.title = `หน้า ${i}`;
+             dot.onclick = () => {
+                currentPage = i;
+                if (currentRole === 'ITSupport') renderITTable();
+                else renderStandardTable();
+             };
+             dotsContainer.appendChild(dot);
+          }
+       }
     }
 
     // Pagination Click handler
