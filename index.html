@@ -1980,9 +1980,19 @@
        } else {
           descEl.innerText = `👤 งานของ: ${currentDevAssignee}`;
        }
-       
+       const todayStr = new Date().toISOString().substring(0, 10);
+       const doneTodayKeys = getDoneTodayKeys();
+
        data.forEach(task => {
           const column = getKanbanColumn(task.rawStatus, task.summary);
+          
+          // ซ่อนการ์ดสถานะเสร็จสิ้น (DONE) ที่มีอายุเก่ากว่า 1 วันออกจากบอร์ดคันบัง
+          if (column === 'DONE') {
+             const isDoneToday = task.created === todayStr || doneTodayKeys.includes(task.key);
+             if (!isDoneToday) {
+                return;
+             }
+          }
           
           let avatarChar = "U";
           let avatarClass = "bg-slate-200 text-slate-600";
