@@ -546,7 +546,7 @@
     // --- State Variables ---
     let rawJiraData = [];      // Mapped data from Jira
     let mockITData = [];       // Mock Sheet data for IT Support
-    let googleSheetUrl = "";   // URL Link to live Google Sheets database
+    let googleSheetUrl = "https://docs.google.com/spreadsheets/d/12PQfplB2eQwgkoUBtwD-A6noIMQBhLT9SfKJMBDIyF4/edit";   // URL Link to live Google Sheets database
     let filteredData = [];     // Data after applying search and filters
     let currentRole = "PM";    // Active role in dashboard
     let selectedPortalRole = ""; 
@@ -977,11 +977,7 @@
           document.getElementById('btn-schedule-icon').className = "fa-solid fa-table mr-1";
           document.getElementById('btn-schedule-text').innerText = "เปิด Google Sheets";
           document.getElementById('btn-schedule').onclick = () => {
-             if (googleSheetUrl) {
-                window.open(googleSheetUrl, "_blank");
-             } else {
-                alert("ระบบกำลังเชื่อมโยง Google Sheets หรือคุณกำลังใช้งานข้อมูลจำลอง (โปรดตรวจสอบการ deploy ของ Google Apps Script)");
-             }
+             window.open(googleSheetUrl, "_blank");
           };
           
           setKPILabels("-", "งานบริการทั้งหมด", "ตั๋วส่งงานวันนี้", "เสร็จสิ้นปิดงาน");
