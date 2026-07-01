@@ -163,7 +163,7 @@
                 <i class="fa-solid fa-plus mr-1"></i> <span id="btn-create-task-text">สร้างงาน</span>
             </button>
             <button id="btn-schedule" onclick="openModal('meetingModal')" class="hidden px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition shadow-md">
-                <i class="fa-regular fa-calendar-plus mr-1"></i> นัดหมาย
+                <i id="btn-schedule-icon" class="fa-regular fa-calendar-plus mr-1"></i> <span id="btn-schedule-text">นัดหมาย</span>
             </button>
           </div>
 
@@ -546,6 +546,7 @@
     // --- State Variables ---
     let rawJiraData = [];      // Mapped data from Jira
     let mockITData = [];       // Mock Sheet data for IT Support
+    let googleSheetUrl = "";   // URL Link to live Google Sheets database
     let filteredData = [];     // Data after applying search and filters
     let currentRole = "PM";    // Active role in dashboard
     let selectedPortalRole = ""; 
@@ -733,7 +734,7 @@
       }
 
       // Initialize secondary sheets & calendars stored in localStorage
-      initITData();
+      await initITData();
       initCalendarData();
       
       // Update UI role configuration
@@ -768,7 +769,40 @@
     }
 
     // IT Support mock sheets proxy data initializer
-    function initITData() {
+    async function initITData() {
+      try {
+         const response = await fetch(`${APPS_SCRIPT_URL}?type=it_support`);
+         const resData = await response.json();
+         
+         if (resData && resData.status === "success") {
+            googleSheetUrl = resData.spreadsheetUrl || "";
+            mockITData = resData.tickets.map(t => {
+               return {
+                  id: t.id,
+                  name: t.name,
+                  lineId: t.lineId,
+                  prob: t.problem,
+                  sol: t.solution,
+                  type: t.type,
+                  status: t.status,
+                  start: t.start,
+                  due: t.start,
+                  priority: t.priority
+               };
+            });
+            localStorage.setItem('tasky_it_tickets', JSON.stringify(mockITData));
+            console.log("IT Support tickets loaded from live Google Sheet database.");
+         } else {
+            console.warn("Failed fetching live sheet, using mockITData fallback.");
+            fallbackITData();
+         }
+      } catch (err) {
+         console.warn("Failed connecting to live Sheets API, using mockITData fallback:", err);
+         fallbackITData();
+      }
+    }
+
+    function fallbackITData() {
       const todayStr = new Date().toISOString().substring(0, 10);
       const localIT = localStorage.getItem('tasky_it_tickets');
       if (localIT) {
@@ -906,6 +940,10 @@
           document.getElementById('btn-create-task-text').innerText = "สร้างงาน Jira";
           document.getElementById('btn-create-task').onclick = () => window.open("https://vichayada.atlassian.net/jira/for-you", "_blank");
           
+          document.getElementById('btn-schedule-icon').className = "fa-regular fa-calendar-plus mr-1";
+          document.getElementById('btn-schedule-text').innerText = "นัดหมาย";
+          document.getElementById('btn-schedule').onclick = () => openModal('meetingModal');
+          
           setKPILabels("-", "งานทั้งหมดในระบบ", "กำลังดำเนินการ", "เสร็จสิ้น");
           break;
 
@@ -933,6 +971,18 @@
           document.getElementById('btn-create-task').classList.remove('hidden');
           document.getElementById('btn-create-task-text').innerText = "สร้างคิวงาน Sheet";
           document.getElementById('btn-create-task').onclick = () => openModal('itSupportTaskModal');
+          
+          // แสดงปุ่มเปิดฐานข้อมูล Google Sheets
+          document.getElementById('btn-schedule').classList.remove('hidden');
+          document.getElementById('btn-schedule-icon').className = "fa-solid fa-table mr-1";
+          document.getElementById('btn-schedule-text').innerText = "เปิด Google Sheets";
+          document.getElementById('btn-schedule').onclick = () => {
+             if (googleSheetUrl) {
+                window.open(googleSheetUrl, "_blank");
+             } else {
+                alert("ระบบกำลังเชื่อมโยง Google Sheets หรือคุณกำลังใช้งานข้อมูลจำลอง (โปรดตรวจสอบการ deploy ของ Google Apps Script)");
+             }
+          };
           
           setKPILabels("-", "งานบริการทั้งหมด", "ตั๋วส่งงานวันนี้", "เสร็จสิ้นปิดงาน");
           break;
@@ -1047,7 +1097,7 @@
           filteredData = mockITData.filter(item => {
               if (searchVal && !item.name.toLowerCase().includes(searchVal) && !item.lineId.toLowerCase().includes(searchVal)) return false;
               
-              const mapped = item.status === 'Completed' ? 'เสร็จสิ้น' : 'กำลังดำเนินการ';
+              const mapped = (item.status === 'Completed' || item.status === 'เสร็จสิ้น') ? 'เสร็จสิ้น' : 'กำลังดำเนินการ';
               if (statusVal && mapped !== statusVal) return false;
               if (typeVal && item.type !== typeVal) return false;
               return true;
@@ -1234,7 +1284,7 @@
          const row = document.createElement('tr');
          row.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
          
-         const badgeClass = item.status === 'เสร็จสิ้น' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
+         const badgeClass = (item.status === 'เสร็จสิ้น' || item.status === 'Completed') ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
          
          let prioColor = '';
          if (item.priority === 'High') prioColor = 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400';
@@ -1284,7 +1334,8 @@
           else if (item.type === 'Install') typeBadge = 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400';
           else typeBadge = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-350';
 
-          const badgeClass = item.status === 'เสร็จสิ้น' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
+          const isDone = item.status === 'เสร็จสิ้น' || item.status === 'Completed';
+          const badgeClass = isDone ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
 
           row.innerHTML = `
              <td class="p-3 pl-5 font-bold text-blue-500">${key}</td>
@@ -1531,6 +1582,146 @@
     }
 
     // --- Task Details Modal Display (Jira standard) ---
+    async function updateITStatus() {
+        const newStatus = document.getElementById('it-update-status').value;
+        
+        const ticket = mockITData.find(t => t.id === activeUpdatingITId);
+        if (!ticket) return;
+        
+        const updatedTicket = { ...ticket, status: newStatus };
+        
+        // Optimistic UI update
+        mockITData = mockITData.map(t => t.id === activeUpdatingITId ? updatedTicket : t);
+        applyRoleFiltering();
+        closeModal('detailModal');
+        
+        document.getElementById('current-role-desc').innerText = `กำลังบันทึกสถานะตั๋วงาน ${activeUpdatingITId} ลง Google Sheet...`;
+        
+        try {
+           const payload = {
+              action: "update_it_ticket",
+              ticketData: {
+                 id: updatedTicket.id,
+                 name: updatedTicket.name,
+                 lineId: updatedTicket.lineId,
+                 type: updatedTicket.type,
+                 priority: updatedTicket.priority,
+                 start: updatedTicket.start,
+                 status: updatedTicket.status,
+                 problem: updatedTicket.prob,
+                 solution: updatedTicket.sol
+              }
+           };
+           
+           const response = await fetch(APPS_SCRIPT_URL, {
+              method: 'POST',
+              headers: {
+                 'Content-Type': 'text/plain'
+              },
+              body: JSON.stringify(payload)
+           });
+           const res = await response.json();
+           
+           if (res && res.status === 'success') {
+              document.getElementById('current-role-desc').innerText = `อัปเดตตั๋ว ${updatedTicket.id} ลง Google Sheet สำเร็จ!`;
+              await initITData();
+              applyRoleFiltering();
+           } else {
+              alert(`ไม่สามารถบันทึกลง Google Sheet ได้: ${res.message}`);
+           }
+        } catch (err) {
+           console.error("Error updating IT support ticket to Google Sheets:", err);
+           document.getElementById('current-role-desc').innerText = `อัปเดตล้มเหลว: เชื่อมต่อเครือข่ายชีทขัดข้อง`;
+        }
+     }
+
+     // --- Save IT Ticket to sheets ---
+     async function submitITTask() {
+        const name = document.getElementById('it-name').value;
+        const lineId = document.getElementById('it-line').value;
+        const type = document.getElementById('it-type').value;
+        const prob = document.getElementById('it-prob').value;
+        const sol = document.getElementById('it-sol').value;
+        const priority = document.getElementById('it-prio').value;
+        const start = document.getElementById('it-start').value || new Date().toISOString().substring(0, 10);
+
+        if (!name || !lineId || !prob) {
+           alert("กรุณากรอกข้อมูล ชื่องาน, Line ID, และปัญหาให้ครบถ้วน!");
+           return;
+        }
+
+        closeModal('itSupportTaskModal');
+        document.getElementById('current-role-desc').innerText = "กำลังเขียนตั๋วงานลง Google Sheet...";
+        
+        const ticketData = {
+           name: name,
+           lineId: lineId,
+           type: type,
+           priority: priority,
+           start: start,
+           status: "กำลังดำเนินการ",
+           problem: prob,
+           solution: sol
+        };
+
+        try {
+           const payload = {
+              action: "create_it_ticket",
+              ticketData: ticketData
+           };
+           
+           const response = await fetch(APPS_SCRIPT_URL, {
+              method: 'POST',
+              headers: {
+                 'Content-Type': 'text/plain'
+              },
+              body: JSON.stringify(payload)
+           });
+           const res = await response.json();
+           
+           if (res && res.status === 'success') {
+              document.getElementById('current-role-desc').innerText = `สร้างตั๋ว ${res.ticketId} ใน Google Sheet สำเร็จ!`;
+              
+              // Reset form
+              document.getElementById('it-name').value = "";
+              document.getElementById('it-line').value = "";
+              document.getElementById('it-prob').value = "";
+              document.getElementById('it-sol').value = "";
+              
+              await initITData();
+              applyRoleFiltering();
+           } else {
+              alert(`ไม่สามารถสร้างตั๋วใน Google Sheet ได้: ${res.message}`);
+           }
+        } catch (err) {
+           console.error("Error creating ticket in Google Sheets:", err);
+           document.getElementById('current-role-desc').innerText = `บันทึกขัดข้อง: ใช้ข้อมูลจำลองบนเครื่องเก็บไว้ชั่วคราว`;
+           
+           const newTicket = {
+              id: `TKT-${mockITData.length + 1}`,
+              name: name,
+              lineId: lineId,
+              type: type,
+              prob: prob,
+              sol: sol,
+              priority: priority,
+              status: "กำลังดำเนินการ",
+              start: start,
+              due: start
+           };
+           mockITData.unshift(newTicket);
+           localStorage.setItem('tasky_it_tickets', JSON.stringify(mockITData));
+           
+           // Reset form
+           document.getElementById('it-name').value = "";
+           document.getElementById('it-line').value = "";
+           document.getElementById('it-prob').value = "";
+           document.getElementById('it-sol').value = "";
+           
+           applyRoleFiltering();
+        }
+     }
+
     function openTaskDetail(key) {
        const task = rawJiraData.find(t => t.key === key);
        if (!task) return;
@@ -1584,7 +1775,7 @@
        document.getElementById('modal-title').innerText = ticket.name;
        document.getElementById('modal-desc').innerText = `อาการเสีย/ปัญหา:\n${ticket.prob}\n\nวิธีการจัดการแก้ไข:\n${ticket.sol}`;
        
-       const badgeClass = ticket.status === 'เสร็จสิ้น' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
+       const badgeClass = (ticket.status === 'เสร็จสิ้น' || ticket.status === 'Completed') ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
 
        document.getElementById('modal-grid').innerHTML = `
           <div class="flex flex-col p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
@@ -1622,7 +1813,7 @@
         openModal('detailModal');
     }
 
-    function updateITStatus() {
+    function duplicate_updateITStatus() {
        const newStatus = document.getElementById('it-update-status').value;
        mockITData = mockITData.map(ticket => {
           if (ticket.id === activeUpdatingITId) {
@@ -1639,7 +1830,7 @@
     }
 
     // --- Save IT Ticket to sheets ---
-    function submitITTask() {
+    function duplicate_submitITTask() {
        const name = document.getElementById('it-name').value;
        const lineId = document.getElementById('it-line').value;
        const type = document.getElementById('it-type').value;
