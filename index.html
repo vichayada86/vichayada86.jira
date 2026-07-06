@@ -2209,7 +2209,14 @@
           if (isOnline && meeting.meetLink && !meeting.meetLink.includes('mock-meet-link')) {
              meetLinkHTML = '<div class="mt-4 p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl border border-emerald-100 dark:border-emerald-900/40 flex items-center justify-between"><div><span class="text-xs text-emerald-800 dark:text-emerald-300 font-semibold block mb-1">ลิงก์เข้าประชุมออนไลน์</span><span class="text-[10px] text-slate-455 truncate block max-w-[200px] md:max-w-md">' + meeting.meetLink + '</span></div><a href="' + meeting.meetLink + '" target="_blank" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center gap-1.5"><i class="fa-solid fa-video text-xs"></i> เข้าห้อง Meet</a></div>';
           } else if (isOnline) {
-             meetLinkHTML = '<div class="mt-4 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-xl border border-amber-100 dark:border-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-medium"><i class="fa-solid fa-circle-exclamation mr-1.5"></i> ลิงก์เข้าห้องประชุมออนไลน์จำลอง หรือสิทธิ์ Calendar API ใน Apps Script ยังยอมรับไม่สมบูรณ์</div>';
+             let errMsg = "สิทธิ์ Calendar API ใน Apps Script ยังยอมรับไม่สมบูรณ์ หรือคุณยังไม่ได้นำโค้ดตั้งค่าใหม่ไป Deploy ทับ";
+              if (meeting.meetLink && meeting.meetLink.includes("?err=")) {
+                 const parts = meeting.meetLink.split("?err=");
+                 if (parts.length > 1) {
+                    errMsg = "ข้อผิดพลาดของ Google: " + decodeURIComponent(parts[1]);
+                 }
+              }
+              meetLinkHTML = '<div class="mt-4 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-xl border border-amber-100 dark:border-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-medium"><i class="fa-solid fa-circle-exclamation mr-1.5"></i> ลิงก์เข้าห้องประชุมออนไลน์จำลอง (' + errMsg + ')</div>';
           }
           
           detailEl.innerHTML = '<div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-darkBorder"><span class="text-xs font-bold px-2.5 py-0.5 rounded-full ' + typeBadge + '">' + meeting.type + '</span><span class="text-xs font-bold text-slate-450">ID: ' + meeting.id + '</span></div>' +
@@ -2864,4 +2871,3 @@
   </script>
 </body>
 </html>
-
