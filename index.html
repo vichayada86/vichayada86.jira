@@ -131,6 +131,15 @@
             <button onclick="filterDevWork('ตะวัน')" id="dev-team-tawan" class="w-full flex items-center gap-3.5 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-sm font-medium transition text-left mt-1">
                 <div class="w-6 h-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-bold">T</div> ตะวัน (Jira)
             </button>
+            <button onclick="filterDevWork('ชาย')" id="dev-team-chai" class="w-full flex items-center gap-3.5 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-sm font-medium transition text-left mt-1">
+                <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">C</div> ชาย (Jira)
+            </button>
+            <button onclick="filterDevWork('หยก')" id="dev-team-yok" class="w-full flex items-center gap-3.5 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-sm font-medium transition text-left mt-1">
+                <div class="w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xs font-bold">Y</div> หยก (Jira)
+            </button>
+            <button onclick="filterDevWork('น่าน')" id="dev-team-nan" class="w-full flex items-center gap-3.5 px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-sm font-medium transition text-left mt-1">
+                <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold">N</div> น่าน (Jira)
+            </button>
         </div>
 
         <div class="pt-6 border-t border-slate-100 dark:border-darkBorder mt-6">
@@ -261,6 +270,16 @@
 
         <!-- Kanban Board for Developer Role -->
         <section id="dev-kanban-section" class="hidden space-y-4">
+           <!-- Developer Overview Section -->
+           <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm mb-4">
+              <h4 class="text-base font-bold mb-4 text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="fa-solid fa-users text-orange-500"></i> ภาพรวมผู้พัฒนาโปรแกรม
+              </h4>
+              <div id="dev-overview-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                 <!-- Populated dynamically -->
+              </div>
+           </div>
+
            <div class="flex items-center justify-between">
               <h4 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                  <i class="fa-solid fa-table-columns text-blue-500"></i> กระดานคิวงานพัฒนา (Kanban Board)
@@ -696,11 +715,14 @@
       
       // Default display username based on selected role
       let defaultUser = "User Admin";
-      if (role === 'CEO') defaultUser = "CEO Executive";
-      else if (role === 'PM') defaultUser = "PM Lead";
-      else if (role === 'SrDev') defaultUser = "Senior Dev May";
-      else if (role === 'Dev') defaultUser = "Developer May";
-      else if (role === 'ITSupport') defaultUser = "IT Staff Tawan";
+      if (role === 'CEO') defaultUser = "CEO ";
+      else if (role === 'PM') defaultUser = "Project Manager ";
+      else if (role === 'SrDev') defaultUser = "Senior Dev";
+      else if (role === 'Dev') defaultUser = "Developer ";
+      else if (role === 'ITSupport') defaultUser = "IT Support";
+      else if (role === 'Sale') defaultUser = "Sales ";
+      else if (role === 'Admin') defaultUser = "Admin ";
+      else if (role === 'Service') defaultUser = "Service ";
       
       document.getElementById('portal-username').value = defaultUser;
       openModal('login-modal');
@@ -991,8 +1013,7 @@
           break;
 
         case 'PM':
-        case 'SrDev':
-          headerTitle = role === 'PM' ? "👔 แดชบอร์ด Project Manager" : "💻 แดชบอร์ด Senior Developer";
+          headerTitle = "👔 แดชบอร์ด Project Manager";
           document.getElementById('action-buttons').classList.remove('hidden');
           document.getElementById('btn-create-task').classList.remove('hidden');
           document.getElementById('btn-schedule').classList.remove('hidden');
@@ -1003,6 +1024,18 @@
           document.getElementById('btn-schedule-icon').className = "fa-regular fa-calendar-plus mr-1";
           document.getElementById('btn-schedule-text').innerText = "นัดหมาย";
           document.getElementById('btn-schedule').onclick = () => openModal('meetingModal');
+          
+          setKPILabels("-", "งานทั้งหมดในระบบ", "กำลังดำเนินการ", "เสร็จสิ้น");
+          break;
+
+        case 'SrDev':
+          headerTitle = "💻 แดชบอร์ด Senior Developer";
+          document.getElementById('action-buttons').classList.remove('hidden');
+          document.getElementById('btn-create-task').classList.remove('hidden');
+          document.getElementById('btn-schedule').classList.add('hidden');
+          
+          document.getElementById('btn-create-task-text').innerText = "สร้างงาน Jira";
+          document.getElementById('btn-create-task').onclick = () => window.open("https://vichayada.atlassian.net/jira/for-you", "_blank");
           
           setKPILabels("-", "งานทั้งหมดในระบบ", "กำลังดำเนินการ", "เสร็จสิ้น");
           break;
@@ -1069,6 +1102,9 @@
        const btnAll = document.getElementById('dev-team-all');
        const btnMay = document.getElementById('dev-team-may');
        const btnTawan = document.getElementById('dev-team-tawan');
+       const btnChai = document.getElementById('dev-team-chai');
+       const btnYok = document.getElementById('dev-team-yok');
+       const btnNan = document.getElementById('dev-team-nan');
        
        const activeClasses = "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold";
        const normalClasses = "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium";
@@ -1076,7 +1112,74 @@
        btnAll.className = `w-full flex items-center gap-3.5 px-4 py-2 rounded-xl text-sm transition text-left ${currentDevAssignee === 'all' ? activeClasses : normalClasses}`;
        btnMay.className = `w-full flex items-center gap-3.5 px-4 py-2 rounded-xl text-sm transition text-left mt-1 ${currentDevAssignee === 'เมย์' ? activeClasses : normalClasses}`;
        btnTawan.className = `w-full flex items-center gap-3.5 px-4 py-2 rounded-xl text-sm transition text-left mt-1 ${currentDevAssignee === 'ตะวัน' ? activeClasses : normalClasses}`;
+       if (btnChai) btnChai.className = `w-full flex items-center gap-3.5 px-4 py-2 rounded-xl text-sm transition text-left mt-1 ${currentDevAssignee === 'ชาย' ? activeClasses : normalClasses}`;
+       if (btnYok) btnYok.className = `w-full flex items-center gap-3.5 px-4 py-2 rounded-xl text-sm transition text-left mt-1 ${currentDevAssignee === 'หยก' ? activeClasses : normalClasses}`;
+       if (btnNan) btnNan.className = `w-full flex items-center gap-3.5 px-4 py-2 rounded-xl text-sm transition text-left mt-1 ${currentDevAssignee === 'น่าน' ? activeClasses : normalClasses}`;
     }
+
+    function isDevMatch(assignee, devName) {
+        if (!assignee) return false;
+        const ass = assignee.toLowerCase();
+        if (devName === 'เมย์') {
+           return ass.includes('วิชญาดา') || ass.includes('เมย์') || ass.includes('may');
+        }
+        if (devName === 'ตะวัน') {
+           return ass.includes('ภัครพงษ์') || ass.includes('ตะวัน') || ass.includes('tawan');
+        }
+        if (devName === 'ชาย') {
+           return ass.includes('ชาย') || ass.includes('chai');
+        }
+        if (devName === 'หยก') {
+           return ass.includes('หยก') || ass.includes('yok');
+        }
+        if (devName === 'น่าน') {
+           return ass.includes('น่าน') || ass.includes('nan');
+        }
+        return false;
+     }
+
+     function renderDevOverview() {
+        const devs = ['เมย์', 'ตะวัน', 'ชาย', 'หยก', 'น่าน'];
+        const container = document.getElementById('dev-overview-grid');
+        if (!container) return;
+        
+        container.innerHTML = "";
+        
+        devs.forEach(devName => {
+           const devIssues = rawJiraData.filter(item => isDevMatch(item.assignee, devName));
+           
+           let doneCount = 0;
+           let activeCount = 0;
+           
+           devIssues.forEach(item => {
+              const rawStatus = (item.rawStatus || '').toLowerCase();
+              const status = (item.status || '').trim();
+              if (status === 'เสร็จสิ้น' || rawStatus === 'done') {
+                 doneCount++;
+              } else {
+                 activeCount++;
+              }
+           });
+           
+           const total = doneCount + activeCount;
+           const progress = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+           
+           const card = document.createElement('div');
+           card.className = "bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-darkBorder text-center flex flex-col justify-between";
+           card.innerHTML = `
+              <div class="font-bold text-sm text-slate-800 dark:text-white mb-2">${devName}</div>
+              <div class="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                 ทำ <span class="font-bold text-slate-700 dark:text-slate-300">${activeCount}</span> | 
+                 เสร็จ <span class="font-bold text-emerald-500">${doneCount}</span>
+              </div>
+              <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden mb-1">
+                 <div class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: ${progress}%"></div>
+              </div>
+              <div class="text-[10px] font-semibold text-slate-400">${progress}% Complete</div>
+           `;
+           container.appendChild(card);
+        });
+     }
 
     // --- CEO Space Multiselect dropdown ---
     function initCEOSpaceDropdown() {
@@ -1212,8 +1315,11 @@
          if (currentRole === 'CEO') return selectedCEOSpaces.includes(item.project);
          if (currentRole === 'Dev') {
             if (currentDevAssignee !== 'all') {
-               if (currentDevAssignee === 'เมย์') return item.assignee.includes('วิชญาดา') || item.assignee.includes('เมย์');
-               if (currentDevAssignee === 'ตะวัน') return item.assignee.includes('ภัครพงษ์') || item.assignee.includes('ตะวัน');
+               if (currentDevAssignee === 'เมย์') return item.assignee.includes('วิชญาดา') || item.assignee.includes('เมย์') || item.assignee.toLowerCase().includes('may');
+               if (currentDevAssignee === 'ตะวัน') return item.assignee.includes('ภัครพงษ์') || item.assignee.includes('ตะวัน') || item.assignee.toLowerCase().includes('tawan');
+               if (currentDevAssignee === 'ชาย') return item.assignee.includes('ชาย') || item.assignee.toLowerCase().includes('chai');
+               if (currentDevAssignee === 'หยก') return item.assignee.includes('หยก') || item.assignee.toLowerCase().includes('yok');
+               if (currentDevAssignee === 'น่าน') return item.assignee.includes('น่าน') || item.assignee.toLowerCase().includes('nan');
             }
          }
          return true; 
@@ -1780,68 +1886,10 @@
        });
        
        const spaceKeys = Object.keys(spaceMap);
-       if (spaceKeys.length === 0) {
-           container.innerHTML = `<p class="text-center text-slate-400 text-sm">ไม่พบคิวงานในแผนภูมิต้นไม้</p>`;
-           openModal('ceoTreeModal');
-     }
-
-     function openITCompletedModal() {
-        const listEl = document.getElementById('it-completed-list');
-        const detailEl = document.getElementById('it-completed-detail');
-        listEl.innerHTML = "";
-        detailEl.innerHTML = '<div class="flex-1 flex items-center justify-center text-slate-400 text-sm"><i class="fa-solid fa-circle-info mr-2"></i>เลือกชื่องานทางซ้ายมือเพื่อดูรายละเอียด</div>';
-        
-        const completedTickets = mockITData.filter(t => t.status === '\u0e40\u0e2a\u0e23\u0e47\u0e08\u0e2a\u0e34\u0e49\u0e19' || t.status === 'Completed');
-        
-        if (completedTickets.length === 0) {
-           listEl.innerHTML = '<p class="text-center text-slate-400 text-xs mt-4">ไม่มีตั๋วงานที่เสร็จสิ้น</p>';
-           openModal('itCompletedModal');
-           return;
-        }
-        
-        completedTickets.forEach((ticket, idx) => {
-           const itemDiv = document.createElement('div');
-           itemDiv.className = 'p-3 rounded-xl cursor-pointer border border-transparent hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-semibold text-slate-850 dark:text-slate-200 flex flex-col gap-1 item-completed-node';
-           itemDiv.id = 'node-' + ticket.id;
-           itemDiv.onclick = () => selectITCompletedNode(ticket.id);
-           itemDiv.innerHTML = '<div class="flex justify-between items-center"><span class="text-[10px] text-blue-500 font-bold">' + ticket.id + '</span><span class="text-[10px] text-slate-455">' + ticket.start + '</span></div><span class="truncate block max-w-full font-bold">' + ticket.name + '</span>';
-           listEl.appendChild(itemDiv);
-        });
-        
-        openModal('itCompletedModal');
-        selectITCompletedNode(completedTickets[0].id);
-     }
-     
-     function selectITCompletedNode(ticketId) {
-        document.querySelectorAll('.item-completed-node').forEach(el => {
-           el.classList.remove('bg-blue-50', 'dark:bg-blue-950/40', 'text-blue-600', 'dark:text-blue-400', 'border-l-4', 'border-blue-500');
-           el.classList.add('hover:bg-slate-100', 'dark:hover:bg-slate-800');
-        });
-        
-        const activeNode = document.getElementById('node-' + ticketId);
-        if (activeNode) {
-           activeNode.classList.add('bg-blue-50', 'dark:bg-blue-950/40', 'text-blue-600', 'dark:text-blue-400', 'border-l-4', 'border-blue-500');
-           activeNode.classList.remove('hover:bg-slate-100', 'dark:hover:bg-slate-800');
-        }
-        
-        const ticket = mockITData.find(t => t.id === ticketId);
-        const detailEl = document.getElementById('it-completed-detail');
-        if (!ticket) return;
-        
-        let prioColor = '';
-        if (ticket.priority === 'High') prioColor = 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400';
-        else if (ticket.priority === 'Medium') prioColor = 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400';
-        else prioColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-350';
-        
-        detailEl.innerHTML = '<div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-darkBorder"><span class="text-sm font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-lg uppercase"><i class="fa-solid fa-circle-check mr-1.5"></i>เสร็จสิ้นปิดงาน</span><span class="text-xs font-bold text-slate-450 font-semibold">ID: ' + ticket.id + '</span></div>' +
-           '<div class="mt-6 space-y-5"><div><h4 class="text-xs font-bold text-slate-400 uppercase mb-1.5">ชื่องาน (Task Name)</h4><div class="text-base font-bold text-slate-900 dark:text-white">' + ticket.name + '</div></div>' +
-           '<div class="grid grid-cols-2 gap-4"><div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl"><span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">Line ID ผู้แจ้ง</span><span class="font-bold text-slate-800 dark:text-white text-xs"><i class="fa-brands fa-line text-emerald-500 mr-1.5"></i>' + ticket.lineId + '</span></div>' +
-           '<div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl"><span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">ประเภท</span><span class="font-bold text-slate-800 dark:text-white text-xs">' + ticket.type + '</span></div></div>' +
-           '<div class="grid grid-cols-2 gap-4"><div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl"><span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">ความเร่งด่วน</span><span class="px-2 py-0.5 rounded text-[10px] font-bold inline-block ' + prioColor + '">' + ticket.priority + '</span></div>' +
-           '<div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl"><span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">วันที่สร้าง (Start)</span><span class="font-bold text-slate-600 dark:text-slate-400 text-xs">' + ticket.start + '</span></div></div>' +
-           '<div><h4 class="text-xs font-bold text-slate-400 uppercase mb-1.5">ปัญหาที่พบ</h4><div class="text-sm bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-darkBorder whitespace-pre-wrap leading-relaxed text-slate-700 dark:text-slate-350">' + (ticket.prob || 'ไม่มีรายละเอียด') + '</div></div>' +
-           '<div><h4 class="text-xs font-bold text-slate-400 uppercase mb-1.5">วิธีการแก้ไขปัญหา</h4><div class="text-sm bg-emerald-50/50 dark:bg-emerald-950/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/40 whitespace-pre-wrap leading-relaxed text-emerald-800 dark:text-emerald-300 font-medium"><i class="fa-solid fa-wrench mr-2 text-emerald-500"></i>' + (ticket.sol || 'ไม่มีการแก้ไขปัญหาบันทึกไว้') + '</div></div></div>';
-           return;
+        if (spaceKeys.length === 0) {
+            container.innerHTML = `<p class="text-center text-slate-400 text-sm">ไม่พบคิวงานในแผนภูมิต้นไม้</p>`;
+            openModal('ceoTreeModal');
+            return;
         }
         
         spaceKeys.forEach((spaceName, sIdx) => {
@@ -2472,63 +2520,7 @@
        }
     }
 
-    function duplicate_updateITStatus() {
-       const newStatus = document.getElementById('it-update-status').value;
-       mockITData = mockITData.map(ticket => {
-          if (ticket.id === activeUpdatingITId) {
-             return { ...ticket, status: newStatus };
-          }
-          return ticket;
-       });
-       
-       // Save to local Sheet proxy
-       localStorage.setItem('tasky_it_tickets', JSON.stringify(mockITData));
-       closeModal('detailModal');
-       
-       applyRoleFiltering();
-    }
-
-    // --- Save IT Ticket to sheets ---
-    function duplicate_submitITTask() {
-       const name = document.getElementById('it-name').value;
-       const lineId = document.getElementById('it-line').value;
-       const type = document.getElementById('it-type').value;
-       const prob = document.getElementById('it-prob').value;
-       const sol = document.getElementById('it-sol').value;
-       const priority = document.getElementById('it-prio').value;
-       const start = document.getElementById('it-start').value || new Date().toISOString().substring(0, 10);
-       const due = document.getElementById('it-due').value || new Date().toISOString().substring(0, 10);
-
-       if (!name || !lineId || !prob) {
-          alert("กรุณากรอกข้อมูล ชื่องาน, Line ID, และปัญหาให้ครบถ้วน!");
-          return;
-       }
-
-       const newTicket = {
-          id: `TKT-${mockITData.length + 1}`,
-          name: name,
-          lineId: lineId,
-          type: type,
-          prob: prob,
-          sol: sol,
-          priority: priority,
-          status: "กำลังดำเนินการ",
-          start: start,
-          due: due
-       };
-
-       mockITData.unshift(newTicket);
-       localStorage.setItem('tasky_it_tickets', JSON.stringify(mockITData));
-       
-       // Reset form
-       document.getElementById('it-name').value = "";
-       document.getElementById('it-line').value = "";
-       document.getElementById('it-prob').value = "";
-       document.getElementById('it-sol').value = "";
-       
-       closeModal('itSupportTaskModal');
-       applyRoleFiltering();
-    }
+    
 
     // --- Save Meeting Calendar Sync to Sheets & Google Calendar with Google Meet ---
     async function submitMeeting() {
