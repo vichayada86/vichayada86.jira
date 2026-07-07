@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasky - Senior Developer Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { 
+        extend: { 
+          colors: { 
+            primaryBlue: '#2ea2f8', 
+            darkBg: '#0f172a', 
+            darkCard: '#1e293b', 
+            darkBorder: '#334155' 
+          } 
+        } 
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Kanit', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    
+    /* Animation classes */
+    .fade-in { animation: fadeIn 0.4s ease-in-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .modal-anim { animation: modalBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes modalBounce {
+      from { opacity: 0; transform: scale(0.9) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-darkBg dark:text-slate-100 transition-colors duration-200 min-h-screen flex flex-col">
+
+  <!-- MAIN DASHBOARD LAYOUT -->
+  <div id="main-layout" class="flex min-h-screen">
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebar-backdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-35 hidden md:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar-container" class="w-72 bg-white dark:bg-darkCard border-r border-slate-200 dark:border-darkBorder p-6 fixed inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0 md:static md:block flex-shrink-0 transition-transform duration-300">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-blue-500/30">T</div>
+        <div>
+          <h1 class="font-bold text-xl leading-none text-slate-900 dark:text-white">Tasky</h1>
+          <span class="text-sm text-slate-400">Jira & Sheets System</span>
+        </div>
+      </div>
+      
+      <nav class="space-y-2">
+        <button id="menu-dashboard" onclick="setTab('dashboard')" class="w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left">
+          <i class="fa-solid fa-chart-pie text-lg w-6"></i> <span>แดชบอร์ด</span>
+        </button>
+        
+        <button id="menu-tasklist" onclick="setTab('tasklist')" class="w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left">
+          <i class="fa-solid fa-list-check text-lg w-6"></i> <span>รายการงาน</span>
+        </button>
+
+        <button id="menu-calendar" onclick="setTab('calendar')" class="w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left">
+          <i class="fa-regular fa-calendar text-lg w-6"></i> <span>ปฏิทินตารางงาน</span>
+        </button>
+
+        <div class="pt-6 border-t border-slate-100 dark:border-darkBorder mt-6">
+          <button onclick="logoutToPortal()" class="w-full flex items-center gap-3.5 px-4 py-3 text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl transition text-left font-semibold">
+            <i class="fa-solid fa-right-from-bracket text-base w-6"></i> ออกจากระบบ 
+          </button>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Workspace Pane -->
+    <main class="flex-1 p-6 md:p-8 overflow-y-auto max-w-[1600px] mx-auto w-full flex flex-col">
+      <!-- Workspace Header -->
+      <header class="flex justify-between items-center mb-8 bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm">
+        <div class="flex items-center gap-3">
+          <button onclick="toggleMobileSidebar()" class="md:hidden p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300">
+            <i class="fa-solid fa-bars text-lg"></i>
+          </button>
+          <div>
+            <h2 id="current-role-title" class="text-xl font-bold text-slate-955 dark:text-white">💻 แดชบอร์ด Senior Developer</h2>
+            <p id="current-role-desc" class="text-sm text-slate-500 dark:text-slate-400">กำลังเชื่อมต่อข้อมูล...</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <!-- Action Buttons -->
+          <div id="action-buttons" class="flex items-center gap-2 mr-4 pr-4 border-r border-slate-200 dark:border-darkBorder">
+             <button id="btn-create-task" onclick="window.open('https://vichayada.atlassian.net/jira/for-you', '_blank')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center gap-1.5">
+               <i class="fa-solid fa-plus text-[10px]"></i> <span id="btn-create-task-text">สร้างงาน Jira</span>
+             </button>
+          </div>
+
+          <!-- Refresh Button -->
+          <button onclick="loadData()" class="p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300" title="ดึงข้อมูลล่าสุด">
+            <i class="fa-solid fa-arrows-rotate text-lg"></i>
+          </button>
+
+          <!-- Dark Mode Toggle -->
+          <button onclick="toggleDarkMode()" class="p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300 mr-4">
+            <i id="theme-icon" class="fa-solid fa-sun text-lg"></i>
+          </button>
+          
+          <!-- Profile Badge -->
+          <div class="flex items-center gap-3">
+            <div id="user-avatar" class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-sm">SD</div>
+            <div class="hidden sm:block text-left">
+              <p id="dashboard-username" class="text-sm font-semibold leading-tight">SrDev User</p>
+              <p id="user-sub-role" class="text-xs text-slate-400">นักพัฒนาระดับสูง • Tech Team</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ==================== TAB: DASHBOARD ==================== -->
+      <div id="tab-content-dashboard" class="space-y-8 fade-in">
+        <!-- KPI Metrics Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- KPI 2 (Total) -->
+          <div class="bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400">งานทั้งหมดในระบบ</p>
+            <h3 id="stat-total" class="text-3xl font-bold mt-2 text-slate-900 dark:text-white">0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-blue-50 dark:bg-blue-950/50 text-blue-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-layer-group"></i></div>
+          </div>
+          <!-- KPI 3 (Active) -->
+          <div class="bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400">กำลังดำเนินการ</p>
+            <h3 id="stat-active" class="text-3xl font-bold mt-2 text-blue-500">0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-blue-50 dark:bg-blue-950/50 text-blue-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-spinner animate-spin"></i></div>
+          </div>
+          <!-- KPI 4 (Done) -->
+          <div class="bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400">เสร็จสิ้น</p>
+            <h3 id="stat-done" class="text-3xl font-bold mt-2 text-emerald-500">0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-circle-check"></i></div>
+          </div>
+        </section>
+
+        <!-- Charts Pane -->
+        <section id="charts-section" class="grid grid-cols-1 lg:grid-cols-2 gap-6 transition-all">
+          <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm flex flex-col justify-between">
+            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4">สัดส่วนสถานะงาน (Doughnut)</h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chart1"></canvas>
+            </div>
+          </div>
+          <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm flex flex-col justify-between">
+            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4">ความเร่งด่วนของงาน (Bar)</h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chart2"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- Recent Tasks Panel -->
+        <section id="recent-tasks-panel" class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm overflow-hidden p-6">
+           <h4 class="text-base font-bold mb-4 text-slate-900 dark:text-white">คิวงานล่าสุดในระบบ</h4>
+           <div id="recent-tasks-container" class="overflow-x-auto">
+               <!-- Populated dynamically -->
+           </div>
+        </section>
+      </div>
+
+      <!-- ==================== TAB: TASK LIST ==================== -->
+      <div id="tab-content-tasklist" class="space-y-6 fade-in hidden">
+        <!-- Standard Filterable Table Section -->
+        <section id="table-section" class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm overflow-hidden flex flex-col p-6">
+           <!-- Filters Toolbar -->
+           <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+              <div class="flex flex-wrap items-center gap-3">
+                 <div class="relative w-64">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="filter-search" oninput="applyFilters()" placeholder="ค้นหางาน, Summary, Key..." class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs font-semibold focus:outline-none focus:border-blue-500 text-slate-900 dark:text-white transition">
+                 </div>
+                 <select id="filter-project" onchange="applyFilters()" class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs font-semibold text-slate-850 dark:text-white outline-none focus:border-blue-500"></select>
+                 <select id="filter-assignee" onchange="applyFilters()" class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs font-semibold text-slate-850 dark:text-white outline-none focus:border-blue-500"></select>
+                 <select id="filter-priority" onchange="applyFilters()" class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs font-semibold text-slate-850 dark:text-white outline-none focus:border-blue-500">
+                    <option value="all">ความเร่งด่วนทั้งหมด</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                 </select>
+                 <select id="filter-status" onchange="applyFilters()" class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs font-semibold text-slate-850 dark:text-white outline-none focus:border-blue-500">
+                    <option value="all">สถานะงานทั้งหมด</option>
+                    <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+                    <option value="เสร็จสิ้น">เสร็จสิ้น</option>
+                 </select>
+              </div>
+           </div>
+
+           <!-- Standard Table Container -->
+           <div class="overflow-x-auto">
+             <table class="w-full text-left border-collapse">
+                <thead>
+                   <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-darkBorder">
+                      <th class="p-3 pl-5">Key</th>
+                      <th class="p-3">Summary</th>
+                      <th class="p-3">Project</th>
+                      <th class="p-3">Assignee</th>
+                      <th class="p-3">Priority</th>
+                      <th class="p-3">Status</th>
+                      <th class="p-3 text-center">Actions</th>
+                   </tr>
+                </thead>
+                <tbody id="table-tbody" class="divide-y divide-slate-100 dark:divide-darkBorder text-sm">
+                   <!-- Populated dynamically -->
+                </tbody>
+             </table>
+           </div>
+
+           <!-- Table Pagination -->
+           <div class="flex justify-between items-center mt-6 pt-6 border-t border-slate-100 dark:border-darkBorder">
+              <span id="table-info" class="text-xs text-slate-400 font-semibold">Showing 1 to 10 of 25 entries</span>
+              <div class="flex items-center gap-1.5" id="table-pagination">
+                 <!-- Populated dynamically -->
+              </div>
+           </div>
+        </section>
+      </div>
+
+      <!-- ==================== TAB: CALENDAR ==================== -->
+      <div id="tab-content-calendar" class="space-y-6 fade-in hidden">
+        <section class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm overflow-hidden p-6 flex flex-col">
+            <!-- Calendar Navigation Header -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+               <div class="flex items-center gap-4">
+                  <h3 id="calendar-month-year" class="text-lg font-bold text-slate-900 dark:text-white">มิถุนายน 2569</h3>
+                  <div class="flex items-center gap-1">
+                     <button onclick="setCalendarViewMode('month')" id="btn-cal-month" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white shadow-sm transition-all">เดือน</button>
+                     <button onclick="setCalendarViewMode('week')" id="btn-cal-week" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 transition-all">สัปดาห์</button>
+                     <div class="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                     <button onclick="navigateCalendar(-1)" class="p-1 px-2.5 text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300 transition-all"><i class="fa-solid fa-chevron-left"></i></button>
+                     <button onclick="navigateCalendar(1)" class="p-1 px-2.5 text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300 transition-all"><i class="fa-solid fa-chevron-right"></i></button>
+                     <button onclick="resetCalendarToToday()" class="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300 font-semibold transition-all">วันนี้</button>
+                  </div>
+               </div>
+            </div>
+            
+            <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+               <div>อา.</div><div>จ.</div><div>อ.</div><div>พ.</div><div>พฤ.</div><div>ศ.</div><div>ส.</div>
+            </div>
+            <div id="calendar-grid" class="grid grid-cols-7 gap-2 flex-1">
+               <!-- Populated dynamically in javascript -->
+            </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== MODALS & POPUPS ==================== -->
+  
+  <!-- MODAL: Meeting Scheduler Modal -->
+  <div id="meetingModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-darkCard w-full max-w-lg rounded-2xl p-6 scale-95 transition-transform duration-300 modal-anim border dark:border-darkBorder shadow-2xl">
+        <h3 class="text-lg font-bold mb-4 text-slate-900 dark:text-white"><i class="fa-solid fa-video text-emerald-500 mr-2"></i> สร้างนัดหมายประชุม</h3>
+        <div class="space-y-3 text-sm text-slate-700 dark:text-slate-350">
+            <div>
+                <label class="block mb-1 font-semibold">รูปแบบการประชุม</label>
+                <select id="meet-type" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 focus:border-blue-500 outline-none text-slate-800 dark:text-white">
+                    <option value="ออนไลน์">ประชุมออนไลน์ (สร้าง Google Meet อัตโนมัติ)</option>
+                    <option value="ออนไซต์">ประชุมออนไซต์ (สถานที่จริง)</option>
+                </select>
+            </div>
+            <div><label class="block mb-1 font-semibold">ชื่อหัวข้อ</label><input type="text" id="meet-topic" placeholder="หัวข้อการประชุม..." class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 focus:border-blue-500 outline-none text-slate-900 dark:text-white"></div>
+            <div><label class="block mb-1 font-semibold">รายละเอียดของงาน</label><textarea id="meet-desc" rows="3" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 focus:border-blue-500 outline-none text-slate-900 dark:text-white"></textarea></div>
+            <div class="grid grid-cols-3 gap-3">
+                <div><label class="block mb-1 font-semibold">วันที่</label><input type="date" id="meet-date" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 text-slate-800 dark:text-white"></div>
+                <div><label class="block mb-1 font-semibold">เวลาเริ่ม</label><input type="time" id="meet-time" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 text-slate-800 dark:text-white"></div>
+                <div>
+                    <label class="block mb-1 font-semibold">ระยะเวลา</label>
+                    <select id="meet-duration" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 outline-none text-slate-800 dark:text-white">
+                        <option value="30">30 นาที</option>
+                        <option value="60" selected>1 ชั่วโมง</option>
+                        <option value="90">1.5 ชั่วโมง</option>
+                        <option value="120">2 ชั่วโมง</option>
+                        <option value="180">3 ชั่วโมง</option>
+                        <option value="240">4 ชั่วโมง</option>
+                        <option value="300">5 ชั่วโมง</option>
+                        <option value="360">6 ชั่วโมง</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-2 border-t dark:border-slate-700 pt-4">
+            <button onclick="closeModal('meetingModal')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg font-medium text-sm text-slate-700 dark:text-white">ยกเลิก</button>
+            <button onclick="submitMeeting()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm shadow-md transition">บันทึกลงปฏิทิน</button>
+        </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Task Details Modal -->
+  <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-darkCard w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden scale-95 transition-transform duration-300 modal-anim flex flex-col max-h-[85vh] border dark:border-darkBorder">
+      <div class="p-5 border-b border-slate-100 dark:border-darkBorder flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+        <h3 class="font-bold text-slate-900 dark:text-white text-base">รายละเอียดตั๋วงาน / ตารางการประชุม</h3>
+        <button onclick="closeModal('detailModal')" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1 text-sm text-slate-800 dark:text-slate-355" id="detailModal-body">
+         <!-- Populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Calendar Meetings List Split-modal -->
+  <div id="calendarMeetingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl border dark:border-darkBorder modal-anim scale-95 overflow-hidden flex flex-col max-h-[75vh]">
+       <div class="p-5 border-b border-slate-100 dark:border-darkBorder flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+          <div>
+             <h3 class="font-bold text-slate-900 dark:text-white text-base">นัดหมายประจำวัน</h3>
+             <p id="cal-meetings-date-subtitle" class="text-xs text-slate-400 mt-0.5">รายละเอียดหัวข้อนัดหมาย</p>
+          </div>
+          <button onclick="closeModal('calendarMeetingsModal')" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+       </div>
+       <div class="flex-1 overflow-y-auto p-4 space-y-3" id="cal-meetings-list-container">
+          <!-- Populated dynamically -->
+       </div>
+    </div>
+  </div>
+
+  <script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIkAhnfLFwEsF2pZNNjwXqrfYQc19Ye5RhsODwTLFDJvWqUwlGwiQDnlHBu4fHsiJ7/exec";
+    
+    let rawJiraData = [];
+    let filteredData = [];
+    let meetings = [];
+    let currentTab = "dashboard";
+
+    // Pagination
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
+    // Calendar
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth();
+    let currentViewMode = "month";
+    let currentWeekStart = new Date();
+
+    let chart1Instance = null;
+    let chart2Instance = null;
+
+    // Load credentials on startup
+    const loggedUsername = localStorage.getItem('tasky_username') || "SrDev User";
+    document.getElementById('dashboard-username').innerText = loggedUsername;
+    
+    // Initialize Theme
+    if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+       document.documentElement.classList.add('dark');
+       document.getElementById('theme-icon').className = "fa-solid fa-moon text-lg";
+    }
+
+    window.onload = async () => {
+       await loadData();
+    };
+
+    function toggleDarkMode() {
+       const isDark = document.documentElement.classList.toggle('dark');
+       localStorage.setItem('theme', isDark ? 'dark' : 'light');
+       document.getElementById('theme-icon').className = isDark ? "fa-solid fa-moon text-lg" : "fa-solid fa-sun text-lg";
+       rebuildCharts();
+    }
+
+    async function loadData() {
+       document.getElementById('current-role-desc').innerText = "กำลังซิงค์คิวงานสะสมจาก Jira API ล่าสุด...";
+       
+       try {
+          const response = await fetch(APPS_SCRIPT_URL);
+          const res = await response.json();
+          
+          if (res && res.status === 'success') {
+             rawJiraData = res.issues.map(item => {
+                return {
+                   key: item.key,
+                   project: item.project,
+                   summary: item.summary,
+                   type: item.type,
+                   status: item.status,
+                   rawStatus: item.rawStatus,
+                   assignee: item.assignee,
+                   priority: item.priority,
+                   created: item.created,
+                   link: item.link,
+                   desc: item.desc || '',
+                   value: item.value || 0
+                };
+             });
+             document.getElementById('current-role-desc').innerText = `อัปเดตข้อมูลล่าสุดสำเร็จ! (เวลา: ${new Date().toLocaleTimeString('th-TH')} น.)`;
+          } else {
+             generateMockJiraData();
+             document.getElementById('current-role-desc').innerText = "แสดงผลด้วยข้อมูลจำลอง (ดึงข้อมูลไม่สำเร็จ)";
+          }
+       } catch (err) {
+          console.error("Failed connecting to Apps Script:", err);
+          generateMockJiraData();
+          document.getElementById('current-role-desc').innerText = "แสดงผลด้วยข้อมูลจำลอง (เชื่อมต่อเครือข่ายล้มเหลว)";
+       }
+
+       await initCalendarData();
+       populateDropdownFilters();
+       applyFilters();
+    }
+
+    function generateMockJiraData() {
+       const todayStr = new Date().toISOString().substring(0, 10);
+       rawJiraData = [];
+       const assignees = ['เมย์', 'ตะวัน', 'Unassigned'];
+       const projects = ['Tasky', 'Core Tech', 'Web portal'];
+       for(let i=1; i<=25; i++) {
+           const typeNum = i % 3;
+           const statusNum = i % 4;
+           const prioNum = i % 3;
+           rawJiraData.push({
+               key: `TAS-${i.toString().padStart(3,'0')}`,
+               project: projects[i % projects.length],
+               summary: i%2===0 ? `พัฒนาระบบหลังบ้าน งานที่ ${i}` : `แก้ไขหน้าล็อกอินงานเทคโนโลยี #${i}`,
+               type: typeNum === 0 ? 'Support' : (typeNum === 1 ? 'Install' : 'R&D'),
+               status: statusNum === 0 ? 'เสร็จสิ้น' : 'กำลังดำเนินการ',
+               rawStatus: statusNum === 0 ? 'Done' : 'In Progress',
+               assignee: assignees[i % assignees.length],
+               priority: prioNum === 0 ? 'High' : (prioNum === 1 ? 'Medium' : 'Low'),
+               created: i%2 === 0 ? todayStr : '2026-06-15',
+               link: `https://vichayada.atlassian.net/browse/TAS-${i.toString().padStart(3,'0')}`,
+               desc: 'รายละเอียดจำลองการทำงานของระบบควบคุมคิวตั๋วงาน Jira Cloud...',
+               value: prioNum === 0 ? 100000 : (prioNum === 1 ? 50000 : 25000)
+           });
+       }
+    }
+
+    async function initCalendarData() {
+       try {
+          const response = await fetch(`${APPS_SCRIPT_URL}?type=meetings`);
+          const res = await response.json();
+          if (res && res.status === 'success') {
+             meetings = res.meetings.map(m => {
+                return {
+                   id: m.id,
+                   title: m.title,
+                   desc: m.desc,
+                   date: m.date,
+                   time: m.time,
+                   endTime: m.endTime,
+                   type: m.type,
+                   meetLink: m.meetLink || ''
+                };
+             });
+             console.log("Loaded meetings:", meetings.length);
+          }
+       } catch (err) {
+          console.warn("Failed fetching calendar events:", err);
+          meetings = [];
+       }
+    }
+
+    async function submitMeeting() {
+        const type = document.getElementById('meet-type').value;
+        const title = document.getElementById('meet-topic').value;
+        const desc = document.getElementById('meet-desc').value;
+        const date = document.getElementById('meet-date').value;
+        const time = document.getElementById('meet-time').value;
+        const duration = document.getElementById('meet-duration').value;
+
+        if (!title || !date || !time) {
+           alert("กรุณากรอกหัวข้อประชุม วันที่ และเวลาให้ครบ!");
+           return;
+        }
+
+        const payload = {
+           action: "create_meeting",
+           meetingData: { type, title, desc, date, time, duration }
+        };
+
+        document.getElementById('current-role-desc').innerText = "กำลังจองเวลาและส่งคำขอ Google Meet API...";
+        closeModal('meetingModal');
+
+        try {
+           const response = await fetch(APPS_SCRIPT_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain' },
+              body: JSON.stringify(payload)
+           });
+           const res = await response.json();
+           
+           if (res && res.status === 'success') {
+              let msg = `สร้างนัดหมายสำเร็จ!`;
+              if (res.meetLink) msg += `\nลิงก์ Google Meet: ${res.meetLink}`;
+              alert(msg);
+              
+              if (res.meetLink && type === 'ออนไลน์') {
+                 window.open(res.meetLink, '_blank');
+              }
+              
+              document.getElementById('current-role-desc').innerText = `สร้างนัดหมายสำเร็จ!`;
+              
+              // Reset fields
+              document.getElementById('meet-topic').value = "";
+              document.getElementById('meet-desc').value = "";
+              document.getElementById('meet-date').value = "";
+              document.getElementById('meet-time').value = "";
+              
+              await initCalendarData();
+              if (currentTab === 'calendar') {
+                 renderCalendarView();
+              }
+           } else {
+              alert("บันทึกนัดหมายไม่สำเร็จ: " + (res.message || "เกิดข้อผิดพลาดในการเชื่อมต่อ"));
+           }
+        } catch (err) {
+           console.error("Network error submitting meeting:", err);
+           alert("เกิดข้อผิดพลาดในการส่งนัดหมายไปยัง Google Sheets");
+        }
+        applyFilters();
+    }
+
+    function setTab(tabName) {
+       currentTab = tabName;
+       
+       document.getElementById('tab-content-dashboard').classList.add('hidden');
+       document.getElementById('tab-content-tasklist').classList.add('hidden');
+       document.getElementById('tab-content-calendar').classList.add('hidden');
+       
+       document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+       
+       document.getElementById('menu-dashboard').className = tabName === 'dashboard' ? 
+         "w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left" : 
+         "w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left";
+         
+       document.getElementById('menu-tasklist').className = tabName === 'tasklist' ? 
+         "w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left" : 
+         "w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left";
+
+       document.getElementById('menu-calendar').className = tabName === 'calendar' ? 
+         "w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left" : 
+         "w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left";
+       
+       if (tabName === 'calendar') {
+          renderCalendarView();
+       } else {
+          applyFilters();
+       }
+       closeMobileSidebar();
+    }
+
+    function logoutToPortal() {
+       localStorage.removeItem('tasky_username');
+       localStorage.removeItem('tasky_role');
+       window.location.href = 'index.html';
+    }
+
+    function toggleMobileSidebar() {
+       const sidebar = document.getElementById('sidebar-container');
+       const backdrop = document.getElementById('sidebar-backdrop');
+       sidebar.classList.toggle('-translate-x-full');
+       backdrop.classList.toggle('hidden');
+    }
+
+    function closeMobileSidebar() {
+       const sidebar = document.getElementById('sidebar-container');
+       const backdrop = document.getElementById('sidebar-backdrop');
+       sidebar.classList.add('-translate-x-full');
+       backdrop.classList.add('hidden');
+    }
+
+    function populateDropdownFilters() {
+       const projFilter = document.getElementById('filter-project');
+       projFilter.innerHTML = '<option value="all">โครงการทั้งหมด (Spaces)</option>';
+       let uniqueProjects = [...new Set(rawJiraData.map(i => i.project))];
+       uniqueProjects.forEach(proj => {
+          projFilter.innerHTML += `<option value="${proj}">${proj}</option>`;
+       });
+
+       const assFilter = document.getElementById('filter-assignee');
+       assFilter.innerHTML = '<option value="all">ผู้รับผิดชอบทั้งหมด</option>';
+       let uniqueAssignees = [...new Set(rawJiraData.map(i => i.assignee))];
+       uniqueAssignees.forEach(ass => {
+          assFilter.innerHTML += `<option value="${ass}">${ass}</option>`;
+       });
+    }
+
+    function applyFilters() {
+       const query = document.getElementById('filter-search').value.toLowerCase().trim();
+       const projVal = document.getElementById('filter-project').value;
+       const assVal = document.getElementById('filter-assignee').value;
+       const prioVal = document.getElementById('filter-priority').value;
+       const statVal = document.getElementById('filter-status').value;
+
+       filteredData = rawJiraData.filter(item => {
+          if (projVal !== 'all' && item.project !== projVal) return false;
+          if (assVal !== 'all' && item.assignee !== assVal) return false;
+          if (prioVal !== 'all' && item.priority !== prioVal) return false;
+          if (statVal !== 'all' && item.status !== statVal) return false;
+          
+          if (query) {
+             const keyMatch = item.key.toLowerCase().includes(query);
+             const sumMatch = item.summary.toLowerCase().includes(query);
+             if (!keyMatch && !sumMatch) return false;
+          }
+          return true;
+       });
+
+       // Update stats
+       let total = 0;
+       let active = 0;
+       let done = 0;
+
+       filteredData.forEach(item => {
+          total++;
+          if (item.status === 'เสร็จสิ้น') done++;
+          else active++;
+       });
+
+       document.getElementById('stat-total').innerText = total;
+       document.getElementById('stat-active').innerText = active;
+       document.getElementById('stat-done').innerText = done;
+
+       currentPage = 1;
+       if (currentTab === 'dashboard') {
+          renderRecentTasksTable();
+          rebuildCharts();
+       } else if (currentTab === 'tasklist') {
+          renderTasklistTable();
+       }
+    }
+
+    function renderRecentTasksTable() {
+       const container = document.getElementById('recent-tasks-container');
+       container.innerHTML = "";
+       
+       let sliceData = filteredData.slice(0, 5);
+       if (sliceData.length === 0) {
+          container.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">ไม่พบข้อมูลงาน</div>`;
+          return;
+       }
+       
+       let html = `
+         <table class="w-full text-left border-collapse">
+            <thead>
+               <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-darkBorder">
+                  <th class="p-3 pl-5">Key</th>
+                  <th class="p-3">Summary</th>
+                  <th class="p-3">Assignee</th>
+                  <th class="p-3 text-center">Actions</th>
+               </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-darkBorder text-sm">
+       `;
+       
+       sliceData.forEach(t => {
+          html += `
+             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="p-3 pl-5 font-bold text-blue-500">${t.key}</td>
+                <td class="p-3 font-semibold text-slate-900 dark:text-white truncate max-w-xs">${t.summary}</td>
+                <td class="p-3 font-medium text-slate-500 dark:text-slate-400">${t.assignee}</td>
+                <td class="p-3 text-center">
+                   <button onclick="openDetailModal('jira', '${t.key}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-xs font-bold transition text-slate-600 dark:text-slate-300">
+                     <i class="fa-solid fa-eye"></i> ดูตั๋ว
+                   </button>
+                </td>
+             </tr>
+          `;
+       });
+       
+       html += `</tbody></table>`;
+       container.innerHTML = html;
+    }
+
+    function renderTasklistTable() {
+       const tbody = document.getElementById('table-tbody');
+       tbody.innerHTML = "";
+       
+       const totalItems = filteredData.length;
+       
+       if (totalItems === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-xs">ไม่พบข้อมูลงานตรงตามเงื่อนไขตัวกรอง</td></tr>`;
+          document.getElementById('table-info').innerText = "Showing 0 of 0 entries";
+          document.getElementById('table-pagination').innerHTML = "";
+          return;
+       }
+       
+       const startIndex = (currentPage - 1) * itemsPerPage;
+       const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+       const paginatedData = filteredData.slice(startIndex, endIndex);
+       
+       paginatedData.forEach(item => {
+          let prioColor = '';
+          if (item.priority === 'High') prioColor = 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400';
+          else if (item.priority === 'Medium') prioColor = 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400';
+          else prioColor = 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-355';
+          
+          const statusCls = item.status === 'เสร็จสิ้น' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
+          
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
+          tr.innerHTML = `
+             <td class="p-3 pl-5 font-bold text-blue-500">${item.key}</td>
+             <td class="p-3 font-semibold text-slate-900 dark:text-white truncate max-w-sm">${item.summary}</td>
+             <td class="p-3 font-bold text-slate-455">${item.project}</td>
+             <td class="p-3 font-medium text-slate-500 dark:text-slate-400">${item.assignee}</td>
+             <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold inline-block ${prioColor}">${item.priority}</span></td>
+             <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusCls}">${item.status}</span></td>
+             <td class="p-3 text-center">
+                <button onclick="openDetailModal('jira', '${item.key}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-xs font-bold transition text-slate-600 dark:text-slate-300">
+                  <i class="fa-solid fa-eye"></i> ดูตั๋ว
+                </button>
+             </td>
+          `;
+          tbody.appendChild(tr);
+       });
+       
+       document.getElementById('table-info').innerText = `Showing ${startIndex + 1} to ${endIndex} of ${totalItems} entries`;
+       renderPaginationControls(totalItems);
+    }
+
+    function renderPaginationControls(totalItems) {
+       const pagEl = document.getElementById('table-pagination');
+       pagEl.innerHTML = "";
+       
+       const totalPages = Math.ceil(totalItems / itemsPerPage);
+       if (totalPages <= 1) return;
+       
+       // Prev
+       const prevBtn = document.createElement('button');
+       prevBtn.disabled = currentPage === 1;
+       prevBtn.className = "p-1.5 px-3 rounded-lg text-xs font-bold bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 disabled:opacity-50 text-slate-600 dark:text-slate-400 transition";
+       prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
+       prevBtn.onclick = () => { currentPage--; renderTasklistTable(); };
+       pagEl.appendChild(prevBtn);
+       
+       // Pages
+       for (let i = 1; i <= totalPages; i++) {
+          const btn = document.createElement('button');
+          btn.className = `p-1.5 px-3 rounded-lg text-xs font-bold transition ${currentPage === i ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100'}`;
+          btn.innerText = i;
+          btn.onclick = () => { currentPage = i; renderTasklistTable(); };
+          pagEl.appendChild(btn);
+       }
+       
+       // Next
+       const nextBtn = document.createElement('button');
+       nextBtn.disabled = currentPage === totalPages;
+       nextBtn.className = "p-1.5 px-3 rounded-lg text-xs font-bold bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 disabled:opacity-50 text-slate-600 dark:text-slate-400 transition";
+       nextBtn.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+       nextBtn.onclick = () => { currentPage++; renderTasklistTable(); };
+       pagEl.appendChild(nextBtn);
+    }
+
+    function rebuildCharts() {
+       renderCharts();
+    }
+
+    function destroyCharts() {
+       if (chart1Instance) { chart1Instance.destroy(); chart1Instance = null; }
+       if (chart2Instance) { chart2Instance.destroy(); chart2Instance = null; }
+    }
+
+    function getThemeTextColor() {
+       return document.documentElement.classList.contains('dark') ? '#94a3b8' : '#475569';
+    }
+
+    function renderCharts() {
+       destroyCharts();
+       const txtColor = getThemeTextColor();
+       
+       let active = 0;
+       let done = 0;
+       let high = 0, medium = 0, low = 0;
+       
+       filteredData.forEach(item => {
+          if (item.status === 'เสร็จสิ้น') done++;
+          else active++;
+          
+          if (item.priority === 'High') high++;
+          else if (item.priority === 'Medium') medium++;
+          else low++;
+       });
+
+       // Chart 1: status doughnut
+       const ctx1 = document.getElementById('chart1').getContext('2d');
+       chart1Instance = new Chart(ctx1, {
+          type: 'doughnut',
+          data: {
+             labels: ['กำลังดำเนินการ', 'เสร็จสิ้น'],
+             datasets: [{
+                data: [active, done],
+                backgroundColor: ['#2ea2f8', '#10b981'],
+                borderWidth: 0
+             }]
+          },
+          options: {
+             responsive: true,
+             maintainAspectRatio: false,
+             plugins: {
+                legend: { position: 'bottom', labels: { color: txtColor } }
+             }
+          }
+       });
+
+       // Chart 2: priority bar
+       const ctx2 = document.getElementById('chart2').getContext('2d');
+       chart2Instance = new Chart(ctx2, {
+          type: 'bar',
+          data: {
+             labels: ['Low', 'Medium', 'High'],
+             datasets: [{
+                label: 'จำนวนตั๋วงาน',
+                data: [low, medium, high],
+                backgroundColor: ['#64748b', '#f59e0b', '#ef4444'],
+                borderRadius: 6
+             }]
+          },
+          options: {
+             responsive: true,
+             maintainAspectRatio: false,
+             plugins: { legend: { display: false } },
+             scales: {
+                x: { ticks: { color: txtColor } },
+                y: { ticks: { color: txtColor } }
+             }
+          }
+       });
+    }
+
+    // ==================== CALENDAR RENDERING ====================
+    const monthNamesTH = [
+      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    ];
+
+    function setCalendarViewMode(mode) {
+       currentViewMode = mode;
+       document.getElementById('btn-cal-month').className = mode === 'month' ? "px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white shadow-sm transition-all" : "px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-355 transition-all";
+       document.getElementById('btn-cal-week').className = mode === 'week' ? "px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white shadow-sm transition-all" : "px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-355 transition-all";
+       
+       if (mode === 'week') {
+          const today = new Date();
+          const target = (currentYear === today.getFullYear() && currentMonth === today.getMonth()) ? today : new Date(currentYear, currentMonth, 1);
+          const day = target.getDay();
+          currentWeekStart = new Date(target.getTime() - (day * 24 * 60 * 60 * 1000));
+       }
+       renderCalendarView();
+    }
+
+    function navigateCalendar(direction) {
+       if (currentViewMode === 'month') {
+          currentMonth += direction;
+          if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+          else if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+       } else {
+          currentWeekStart = new Date(currentWeekStart.getTime() + (direction * 7 * 24 * 60 * 60 * 1000));
+          currentMonth = currentWeekStart.getMonth();
+          currentYear = currentWeekStart.getFullYear();
+       }
+       renderCalendarView();
+    }
+
+    function resetCalendarToToday() {
+       const today = new Date();
+       currentYear = today.getFullYear();
+       currentMonth = today.getMonth();
+       if (currentViewMode === 'week') {
+          const day = today.getDay();
+          currentWeekStart = new Date(today.getTime() - (day * 24 * 60 * 60 * 1000));
+       }
+       renderCalendarView();
+    }
+
+    function renderCalendarView() {
+       if (currentViewMode === 'month') {
+          renderMonthView();
+       } else {
+          renderWeekView();
+       }
+    }
+
+    function renderMonthView() {
+       document.getElementById('calendar-month-year').innerText = `${monthNamesTH[currentMonth]} ${currentYear + 543}`;
+       const grid = document.getElementById('calendar-grid');
+       grid.innerHTML = "";
+
+       const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+       const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+       const prevTotalDays = new Date(currentYear, currentMonth, 0).getDate();
+
+       const today = new Date();
+       const todayStr = `${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2,'0')}-${today.getDate().toString().padStart(2,'0')}`;
+
+       // Prev month overflow days
+       for (let i = firstDayIndex - 1; i >= 0; i--) {
+          const dayNum = prevTotalDays - i;
+          const dayDiv = document.createElement('div');
+          dayDiv.className = "bg-slate-50/45 dark:bg-slate-800/20 text-slate-400 p-2.5 rounded-xl border border-slate-100/50 dark:border-slate-800/30 text-left min-h-[100px] flex flex-col justify-between";
+          dayDiv.innerHTML = `<span class="font-bold text-[10px] text-slate-350">${dayNum}</span>`;
+          grid.appendChild(dayDiv);
+       }
+
+       // Current month days
+       for (let d = 1; d <= totalDays; d++) {
+          const dStr = `${currentYear}-${(currentMonth+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
+          const isToday = dStr === todayStr;
+          
+          const dayDiv = document.createElement('div');
+          dayDiv.className = `p-2.5 rounded-xl border transition-all text-left min-h-[100px] flex flex-col justify-between cursor-pointer ${isToday ? 'bg-blue-50/70 dark:bg-blue-950/20 border-blue-500 shadow-md text-blue-600 dark:text-blue-400' : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-darkBorder hover:border-blue-400'}`;
+          dayDiv.onclick = () => openCalendarEventModal(dStr);
+
+          const dayMeetings = meetings.filter(m => m.date === dStr);
+          let meetingsHTML = "";
+          if (dayMeetings.length > 0) {
+             dayMeetings.forEach((meet, idx) => {
+                if (idx < 2) {
+                   const isOnline = meet.type === 'ออนไลน์';
+                   const colorClass = isOnline ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400' : 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400';
+                   meetingsHTML += `
+                      <div class="text-[9px] font-bold px-1.5 py-0.5 rounded truncate max-w-full ${colorClass} mt-1 flex items-center gap-0.5">
+                         <i class="fa-solid ${isOnline ? 'fa-video' : 'fa-handshake'} text-[8px]"></i>
+                         <span>${meet.title}</span>
+                      </div>
+                   `;
+                }
+             });
+             if (dayMeetings.length > 2) {
+                meetingsHTML += `<div class="text-[8px] font-bold text-slate-400 pl-1 mt-1">+ อีก ${dayMeetings.length - 2} นัดหมาย</div>`;
+             }
+          }
+
+          dayDiv.innerHTML = `
+             <span class="font-bold text-xs">${d}</span>
+             <div class="flex-1 flex flex-col justify-end mt-1 overflow-hidden">
+                ${meetingsHTML}
+             </div>
+          `;
+          grid.appendChild(dayDiv);
+       }
+
+       // Next month days
+       const totalCells = grid.children.length;
+       const remainingCells = 42 - totalCells;
+       for (let i = 1; i <= remainingCells; i++) {
+          const dayDiv = document.createElement('div');
+          dayDiv.className = "bg-slate-50/45 dark:bg-slate-800/20 text-slate-400 p-2.5 rounded-xl border border-slate-100/50 dark:border-slate-800/30 text-left min-h-[100px] flex flex-col justify-between";
+          dayDiv.innerHTML = `<span class="font-bold text-[10px] text-slate-350">${i}</span>`;
+          grid.appendChild(dayDiv);
+       }
+    }
+
+    function renderWeekView() {
+       const start = currentWeekStart;
+       const end = new Date(start.getTime() + (6 * 24 * 60 * 60 * 1000));
+       
+       const titleStr = `${start.getDate()} ${monthNamesTH[start.getMonth()]} - ${end.getDate()} ${monthNamesTH[end.getMonth()]} ${currentYear + 543}`;
+       document.getElementById('calendar-month-year').innerText = titleStr;
+
+       const grid = document.getElementById('calendar-grid');
+       grid.innerHTML = "";
+
+       const today = new Date();
+       const todayStr = `${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2,'0')}-${today.getDate().toString().padStart(2,'0')}`;
+
+       for (let i = 0; i < 7; i++) {
+          const d = new Date(start.getTime() + (i * 24 * 60 * 60 * 1000));
+          const dStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
+          const isToday = dStr === todayStr;
+
+          const dayDiv = document.createElement('div');
+          dayDiv.className = `p-2.5 rounded-xl border transition-all text-left min-h-[160px] flex flex-col justify-between cursor-pointer ${isToday ? 'bg-blue-50/70 dark:bg-blue-950/20 border-blue-500 shadow-md text-blue-600 dark:text-blue-400' : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-darkBorder hover:border-blue-400'}`;
+          dayDiv.onclick = () => openCalendarEventModal(dStr);
+
+          const dayMeetings = meetings.filter(m => m.date === dStr);
+          let meetingsHTML = "";
+          dayMeetings.forEach((meet) => {
+             const isOnline = meet.type === 'ออนไลน์';
+             const colorClass = isOnline ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400' : 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400';
+             meetingsHTML += `
+                <div class="text-[9px] font-bold p-1 rounded max-w-full ${colorClass} mt-1 flex flex-col">
+                   <div class="flex items-center gap-0.5">
+                      <i class="fa-solid ${isOnline ? 'fa-video' : 'fa-handshake'} text-[8px]"></i>
+                      <span class="truncate">${meet.title}</span>
+                   </div>
+                   <span class="text-[8px] opacity-75">${meet.time} น.</span>
+                </div>
+             `;
+          });
+
+          dayDiv.innerHTML = `
+             <div class="flex justify-between items-center mb-1">
+                <span class="font-bold text-xs">${d.getDate()}</span>
+                <span class="text-[9px] opacity-60">${d.toLocaleDateString('th-TH', {weekday: 'short'})}</span>
+             </div>
+             <div class="flex-1 flex flex-col justify-start overflow-y-auto max-h-[120px]">
+                ${meetingsHTML}
+             </div>
+          `;
+          grid.appendChild(dayDiv);
+       }
+    }
+
+    function openCalendarEventModal(dateStr) {
+       const formattedDate = new Date(dateStr).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
+       document.getElementById('cal-meetings-date-subtitle').innerText = `นัดหมายของวันที่ ${formattedDate}`;
+       
+       const container = document.getElementById('cal-meetings-list-container');
+       container.innerHTML = "";
+
+       const dayMeetings = meetings.filter(m => m.date === dateStr);
+       
+       if (dayMeetings.length === 0) {
+          container.innerHTML = `
+             <div class="text-center py-6 text-slate-400 text-xs flex flex-col items-center gap-2">
+                <i class="fa-regular fa-calendar-times text-xl"></i>
+                ไม่มีรายการนัดหมายสำหรับวันนี้
+             </div>
+          `;
+       } else {
+          dayMeetings.forEach(meet => {
+             const isOnline = meet.type === 'ออนไลน์';
+             const tagCls = isOnline ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400';
+             
+             let linkBtn = "";
+             if (isOnline && meet.meetLink && !meet.meetLink.includes('mock-meet-link')) {
+                linkBtn = `
+                   <div class="mt-2.5 flex justify-end">
+                      <a href="${meet.meetLink}" target="_blank" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold transition shadow flex items-center gap-1">
+                         <i class="fa-solid fa-video text-[9px]"></i> เข้าห้องประชุม Meet
+                      </a>
+                   </div>
+                `;
+             }
+             
+             const div = document.createElement('div');
+             div.className = "p-3.5 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-xl flex flex-col gap-1.5 hover:shadow-sm transition cursor-pointer";
+             div.onclick = () => { closeModal('calendarMeetingsModal'); openDetailModal('meet', meet.id); };
+             div.innerHTML = `
+                <div class="flex justify-between items-start gap-2">
+                   <span class="font-bold text-slate-900 dark:text-white text-xs">${meet.title}</span>
+                   <span class="px-2 py-0.5 rounded text-[8px] font-bold ${tagCls} flex-shrink-0">${meet.type}</span>
+                </div>
+                <p class="text-[10px] text-slate-455 truncate leading-tight">${meet.desc || 'ไม่มีรายละเอียดนัดหมาย'}</p>
+                <div class="flex justify-between items-center text-[10px] text-slate-400 mt-1 font-semibold">
+                   <span><i class="fa-regular fa-clock mr-1"></i>${meet.time} - ${meet.endTime || 'ไม่กำหนด'} น.</span>
+                </div>
+                ${linkBtn}
+             `;
+             container.appendChild(div);
+          });
+       }
+       openModal('calendarMeetingsModal');
+    }
+
+    function openDetailModal(type, id) {
+       const detailEl = document.getElementById('detailModal-body');
+       detailEl.innerHTML = "";
+
+       if (type === 'meet') {
+          const meeting = meetings.find(m => m.id === id);
+          if (!meeting) return;
+
+          const isOnline = meeting.type === 'ออนไลน์';
+          const tagCls = isOnline ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400';
+          
+          let meetLinkHTML = '';
+          if (isOnline && meeting.meetLink && !meeting.meetLink.includes('mock-meet-link')) {
+             meetLinkHTML = `
+                <div class="mt-4 p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl border border-emerald-100 dark:border-emerald-900/40 flex items-center justify-between">
+                   <div>
+                      <span class="text-xs text-emerald-800 dark:text-emerald-300 font-semibold block mb-1">ลิงก์เข้าประชุมออนไลน์</span>
+                      <span class="text-[10px] text-slate-455 truncate block max-w-[200px] md:max-w-md">${meeting.meetLink}</span>
+                   </div>
+                   <a href="${meeting.meetLink}" target="_blank" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center gap-1.5">
+                      <i class="fa-solid fa-video text-xs"></i> เข้าห้อง Meet
+                   </a>
+                </div>`;
+          } else if (isOnline) {
+             meetLinkHTML = `
+                <div class="mt-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-between">
+                   <div>
+                      <span class="text-xs font-semibold block mb-1">ลิงก์เข้าประชุม (ข้อมูลจำลอง)</span>
+                      <span class="text-[10px] text-slate-400">https://meet.google.com/mock-meet-link</span>
+                   </div>
+                   <button onclick="alert('นี่คือห้องมีตจำลองการใช้งาน')" class="px-4 py-2 bg-slate-400 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center gap-1.5">
+                      <i class="fa-solid fa-video text-xs"></i> เข้าห้อง Meet
+                   </button>
+                </div>`;
+          }
+
+          detailEl.innerHTML = `
+             <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-darkBorder">
+                <span class="text-xs font-bold px-2.5 py-0.5 rounded-full ${tagCls}">การนัดหมายประชุม</span>
+                <span class="text-xs font-bold text-slate-455">ID: ${meeting.id}</span>
+             </div>
+             <div class="mt-6 space-y-5">
+                <div>
+                   <span class="text-[10px] text-slate-455 font-bold block mb-1">หัวข้อเรื่อง (Topic)</span>
+                   <div class="text-lg font-bold text-slate-900 dark:text-white">${meeting.title}</div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                   <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                      <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">วันที่ (Date)</span>
+                      <span class="font-bold text-slate-800 dark:text-white text-xs"><i class="fa-regular fa-calendar text-blue-500 mr-1.5"></i>${meeting.date}</span>
+                   </div>
+                   <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                      <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">เวลาการประชุม</span>
+                      <span class="font-bold text-slate-800 dark:text-white text-xs"><i class="fa-regular fa-clock text-blue-500 mr-1.5"></i>${meeting.time} - ${meeting.endTime || 'ไม่กำหนด'} น.</span>
+                   </div>
+                </div>
+                <div>
+                   <span class="text-[10px] text-slate-455 font-bold block mb-1">รายละเอียด</span>
+                   <div class="text-sm bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-darkBorder whitespace-pre-wrap leading-relaxed text-slate-700 dark:text-slate-355">${meeting.desc || 'ไม่มีรายละเอียดนัดหมาย'}</div>
+                </div>
+                ${meetLinkHTML}
+             </div>
+          `;
+       } else {
+          const task = rawJiraData.find(j => j.key === id);
+          if (!task) return;
+          
+          let priorityBadge = 'bg-slate-50 text-slate-655';
+          if (task.priority.toLowerCase() === 'high' || task.priority.toLowerCase() === 'highest' || task.priority.toLowerCase() === 'critical') {
+             priorityBadge = 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400';
+          }
+          
+          detailEl.innerHTML = `
+             <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-darkBorder">
+                <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">Jira Ticket</span>
+                <span class="text-xs font-bold text-slate-455">Key: ${task.key}</span>
+             </div>
+             <div class="mt-6 space-y-5">
+                <div>
+                   <span class="text-[10px] text-slate-455 font-bold block mb-1">หัวข้อเรื่องงาน (Summary)</span>
+                   <div class="text-lg font-bold text-slate-900 dark:text-white">${task.summary}</div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                   <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                      <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">โครงการ (Project)</span>
+                      <span class="font-bold text-slate-800 dark:text-white text-xs"><i class="fa-solid fa-folder-open text-blue-500 mr-1.5"></i>${task.project}</span>
+                   </div>
+                   <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                      <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">สถานะงาน</span>
+                      <span class="font-bold text-slate-855 dark:text-white text-xs"><i class="fa-solid fa-circle-info text-blue-500 mr-1.5"></i>${task.status} (${task.rawStatus})</span>
+                   </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                   <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                      <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">ความสำคัญ (Priority)</span>
+                      <span class="font-bold text-xs ${priorityBadge}"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${task.priority}</span>
+                   </div>
+                   <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                      <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">ผู้รับผิดชอบ</span>
+                      <span class="font-bold text-slate-800 dark:text-white text-xs"><i class="fa-regular fa-user text-blue-500 mr-1.5"></i>${task.assignee}</span>
+                   </div>
+                </div>
+                <div>
+                   <span class="text-[10px] text-slate-455 font-bold block mb-1">รายละเอียด</span>
+                   <div class="text-sm bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-darkBorder whitespace-pre-wrap leading-relaxed text-slate-700 dark:text-slate-355">${task.desc || 'ไม่มีรายละเอียด'}</div>
+                </div>
+                <div class="mt-4 flex justify-end">
+                   <a href="${task.link}" target="_blank" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center gap-1.5">
+                      <i class="fa-brands fa-jira text-xs"></i> เปิดดูใบงานจริงใน Jira
+                   </a>
+                </div>
+             </div>
+          `;
+       }
+       openModal('detailModal');
+    }
+
+    function openModal(id) {
+       const modal = document.getElementById(id);
+       modal.classList.remove('hidden');
+       setTimeout(() => {
+          modal.firstElementChild.classList.replace('scale-95', 'scale-100');
+       }, 50);
+    }
+
+    function closeModal(id) {
+       const modal = document.getElementById(id);
+       modal.firstElementChild.classList.replace('scale-100', 'scale-95');
+       setTimeout(() => {
+          modal.classList.add('hidden');
+       }, 150);
+    }
+  </script>
+</body>
+</html>

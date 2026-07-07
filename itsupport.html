@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasky - IT Support Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { 
+        extend: { 
+          colors: { 
+            primaryBlue: '#2ea2f8', 
+            darkBg: '#0f172a', 
+            darkCard: '#1e293b', 
+            darkBorder: '#334155' 
+          } 
+        } 
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Kanit', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    
+    /* Animation classes */
+    .fade-in { animation: fadeIn 0.4s ease-in-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .modal-anim { animation: modalBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes modalBounce {
+      from { opacity: 0; transform: scale(0.9) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-darkBg dark:text-slate-100 transition-colors duration-200 min-h-screen flex flex-col">
+
+  <!-- MAIN DASHBOARD LAYOUT -->
+  <div id="main-layout" class="flex min-h-screen">
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebar-backdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-35 hidden md:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar-container" class="w-72 bg-white dark:bg-darkCard border-r border-slate-200 dark:border-darkBorder p-6 fixed inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0 md:static md:block flex-shrink-0 transition-transform duration-300">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-blue-500/30">T</div>
+        <div>
+          <h1 class="font-bold text-xl leading-none text-slate-900 dark:text-white">Tasky</h1>
+          <span class="text-sm text-slate-400">Jira & Sheets System</span>
+        </div>
+      </div>
+      
+      <nav class="space-y-2">
+        <button id="menu-dashboard" onclick="setTab('dashboard')" class="w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left">
+          <i class="fa-solid fa-chart-pie text-lg w-6"></i> <span>แดชบอร์ด</span>
+        </button>
+        
+        <button id="menu-tasklist" onclick="setTab('tasklist')" class="w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left">
+          <i class="fa-solid fa-list-check text-lg w-6"></i> <span>ตั๋วงานทั้งหมด</span>
+        </button>
+
+        <div class="pt-6 border-t border-slate-100 dark:border-darkBorder mt-6">
+          <button onclick="logoutToPortal()" class="w-full flex items-center gap-3.5 px-4 py-3 text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl transition text-left font-semibold">
+            <i class="fa-solid fa-right-from-bracket text-base w-6"></i> ออกจากระบบ 
+          </button>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Workspace Pane -->
+    <main class="flex-1 p-6 md:p-8 overflow-y-auto max-w-[1600px] mx-auto w-full flex flex-col">
+      <!-- Workspace Header -->
+      <header class="flex justify-between items-center mb-8 bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm">
+        <div class="flex items-center gap-3">
+          <button onclick="toggleMobileSidebar()" class="md:hidden p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300">
+            <i class="fa-solid fa-bars text-lg"></i>
+          </button>
+          <div>
+            <h2 id="current-role-title" class="text-xl font-bold text-slate-955 dark:text-white">🚀 แดชบอร์ดบันทึกตั๋วงานไอที (IT Sheets Database)</h2>
+            <p id="current-role-desc" class="text-sm text-slate-500 dark:text-slate-400">กำลังเชื่อมต่อข้อมูล...</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <!-- Action Buttons -->
+          <div id="action-buttons" class="flex items-center gap-2 mr-4 pr-4 border-r border-slate-200 dark:border-darkBorder">
+             <button id="btn-create-task" onclick="openModal('itSupportTaskModal')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center gap-1.5">
+               <i class="fa-solid fa-plus text-[10px]"></i> <span id="btn-create-task-text">สร้างคิวงาน Sheet</span>
+             </button>
+             <button id="btn-schedule" onclick="window.open(googleSheetUrl, '_blank')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center gap-1.5">
+               <i id="btn-schedule-icon" class="fa-solid fa-table mr-1"></i> <span id="btn-schedule-text">เปิด Google Sheets</span>
+             </button>
+          </div>
+
+          <!-- Refresh Button -->
+          <button onclick="loadData()" class="p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300" title="ดึงข้อมูลล่าสุด">
+            <i class="fa-solid fa-arrows-rotate text-lg"></i>
+          </button>
+
+          <!-- Dark Mode Toggle -->
+          <button onclick="toggleDarkMode()" class="p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300 mr-4">
+            <i id="theme-icon" class="fa-solid fa-sun text-lg"></i>
+          </button>
+          
+          <!-- Profile Badge -->
+          <div class="flex items-center gap-3">
+            <div id="user-avatar" class="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-sm">IT</div>
+            <div class="hidden sm:block text-left">
+              <p id="dashboard-username" class="text-sm font-semibold leading-tight">IT Support Team</p>
+              <p id="user-sub-role" class="text-xs text-slate-400">เจ้าหน้าที่เทคนิค • IT Support</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ==================== TAB: DASHBOARD ==================== -->
+      <div id="tab-content-dashboard" class="space-y-8 fade-in">
+        <!-- KPI Metrics Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- KPI 2 (Total) -->
+          <div onclick="openITCompletedModal()" class="cursor-pointer bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group hover:border-blue-500 hover:shadow-md transition">
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400">งานบริการทั้งหมด (IT Tickets)</p>
+            <h3 id="stat-total" class="text-3xl font-bold mt-2 text-slate-900 dark:text-white">0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-blue-50 dark:bg-blue-950/50 text-blue-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition"><i class="fa-solid fa-headset"></i></div>
+          </div>
+          <!-- KPI 3 (Active) -->
+          <div class="bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden">
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400">กำลังดำเนินการ</p>
+            <h3 id="stat-active" class="text-3xl font-bold mt-2 text-blue-500">0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-blue-50 dark:bg-blue-950/50 text-blue-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-spinner animate-spin"></i></div>
+          </div>
+          <!-- KPI 4 (Done) -->
+          <div onclick="openITCompletedModal()" class="cursor-pointer bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group hover:border-emerald-500 hover:shadow-md transition">
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400">เสร็จสิ้นปิดงาน</p>
+            <h3 id="stat-done" class="text-3xl font-bold mt-2 text-emerald-500">0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition"><i class="fa-solid fa-circle-check"></i></div>
+          </div>
+        </section>
+
+        <!-- Charts Pane -->
+        <section id="charts-section" class="grid grid-cols-1 lg:grid-cols-2 gap-6 transition-all">
+          <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm flex flex-col justify-between">
+            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4">สัดส่วนสถานะงานบริการไอที (Pie)</h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chart1"></canvas>
+            </div>
+          </div>
+          <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm flex flex-col justify-between">
+            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4">ตั๋วช่วยเหลือไอทีแยกตามความเร่งด่วน (Bar)</h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chart2"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- Recent Tasks Panel -->
+        <section id="recent-tasks-panel" class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm overflow-hidden p-6">
+           <h4 class="text-base font-bold mb-4 text-slate-900 dark:text-white">คิวงานบริการไอทีล่าสุด</h4>
+           <div id="recent-tasks-container" class="overflow-x-auto">
+               <!-- Populated dynamically -->
+           </div>
+        </section>
+      </div>
+
+      <!-- ==================== TAB: TASK LIST ==================== -->
+      <div id="tab-content-tasklist" class="space-y-6 fade-in hidden">
+        <!-- Standard Filterable Table Section -->
+        <section id="table-section" class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm overflow-hidden flex flex-col p-6">
+           <!-- Filters Toolbar -->
+           <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+              <div class="flex flex-wrap items-center gap-3">
+                 <div class="relative w-64">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="filter-search" oninput="applyFilters()" placeholder="ค้นหาชื่องาน, ปัญหา, ID..." class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs font-semibold focus:outline-none focus:border-blue-500 text-slate-900 dark:text-white transition">
+                 </div>
+                 <select id="filter-type" onchange="applyFilters()" class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs font-semibold text-slate-855 dark:text-white outline-none focus:border-blue-500">
+                    <option value="all">ประเภทตั๋วทั้งหมด</option>
+                    <option value="Support">Support</option>
+                    <option value="Install">Install</option>
+                 </select>
+                 <select id="filter-priority" onchange="applyFilters()" class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs font-semibold text-slate-855 dark:text-white outline-none focus:border-blue-500">
+                    <option value="all">ความเร่งด่วนทั้งหมด</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                 </select>
+                 <select id="filter-status" onchange="applyFilters()" class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs font-semibold text-slate-855 dark:text-white outline-none focus:border-blue-500">
+                    <option value="all">สถานะงานทั้งหมด</option>
+                    <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+                    <option value="เสร็จสิ้น">เสร็จสิ้น</option>
+                 </select>
+              </div>
+           </div>
+
+           <!-- Standard Table Container -->
+           <div class="overflow-x-auto">
+             <table class="w-full text-left border-collapse">
+                <thead>
+                   <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-darkBorder">
+                      <th class="p-3 pl-5">ID</th>
+                      <th class="p-3">ชื่องาน (Task Name)</th>
+                      <th class="p-3">Line ID ผู้แจ้ง</th>
+                      <th class="p-3">ประเภท</th>
+                      <th class="p-3">ความเร่งด่วน</th>
+                      <th class="p-3">สถานะ</th>
+                      <th class="p-3 text-center">Actions</th>
+                   </tr>
+                </thead>
+                <tbody id="table-tbody" class="divide-y divide-slate-100 dark:divide-darkBorder text-sm">
+                   <!-- Populated dynamically -->
+                </tbody>
+             </table>
+           </div>
+
+           <!-- Table Pagination -->
+           <div class="flex justify-between items-center mt-6 pt-6 border-t border-slate-100 dark:border-darkBorder">
+              <span id="table-info" class="text-xs text-slate-400 font-semibold">Showing 1 to 10 of 25 entries</span>
+              <div class="flex items-center gap-1.5" id="table-pagination">
+                 <!-- Populated dynamically -->
+              </div>
+           </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== MODALS & POPUPS ==================== -->
+  
+  <!-- MODAL: IT Support Create Ticket Modal -->
+  <div id="itSupportTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-darkCard w-full max-w-lg rounded-2xl p-6 scale-95 transition-transform duration-300 modal-anim border dark:border-darkBorder shadow-2xl">
+        <h3 class="text-lg font-bold mb-4 text-slate-900 dark:text-white"><i class="fa-solid fa-headset text-blue-500 mr-2"></i> สร้างตั๋วงาน IT Support</h3>
+        <div class="space-y-3 text-sm text-slate-700 dark:text-slate-355">
+            <div><label class="block mb-1 font-semibold">ชื่องาน (Task Name)</label><input type="text" id="it-name" placeholder="เช่น ซ่อมคอมพิวเตอร์..." class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 outline-none text-slate-900 dark:text-white"></div>
+            <div class="grid grid-cols-2 gap-3">
+              <div><label class="block mb-1 font-semibold">Line ID</label><input type="text" id="it-line" placeholder="@username" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 outline-none text-slate-900 dark:text-white"></div>
+              <div><label class="block mb-1 font-semibold">ประเภท</label><select id="it-type" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 outline-none text-slate-800 dark:text-white"><option value="Support">Support</option><option value="Install">Install</option></select></div>
+            </div>
+            <div><label class="block mb-1 font-semibold">ปัญหาที่พบ</label><input type="text" id="it-prob" placeholder="ปัญหาการใช้งาน..." class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 outline-none text-slate-900 dark:text-white"></div>
+            <div><label class="block mb-1 font-semibold">วิธีการแก้ไขปัญหา</label><textarea id="it-sol" placeholder="เช่น อัปเดตไดรเวอร์ หรือเปลี่ยนฮาร์ดแวร์..." rows="2" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 outline-none text-slate-900 dark:text-white"></textarea></div>
+            <div class="grid grid-cols-3 gap-3">
+                <div><label class="block mb-1 font-semibold">ความสำคัญ</label><select id="it-prio" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 outline-none text-slate-800 dark:text-white"><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select></div>
+                <div><label class="block mb-1 font-semibold">เริ่ม</label><input type="date" id="it-start" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2 text-slate-800 dark:text-white"></div>
+                <div><label class="block mb-1 font-semibold">กำหนดส่ง</label><input type="date" id="it-due" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2 text-slate-800 dark:text-white"></div>
+            </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-2 border-t dark:border-slate-700 pt-4">
+            <button onclick="closeModal('itSupportTaskModal')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg font-medium text-sm text-slate-700 dark:text-white">ยกเลิก</button>
+            <button onclick="submitITTask()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm shadow-md transition">บันทึกคิวงาน</button>
+        </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Task Details Modal (Contains Status Update form) -->
+  <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-darkCard w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden scale-95 transition-transform duration-300 modal-anim border dark:border-darkBorder flex flex-col max-h-[85vh]">
+      <div class="p-5 border-b border-slate-100 dark:border-darkBorder flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+        <h3 class="font-bold text-slate-900 dark:text-white text-base">รายละเอียดตั๋วงานบริการไอที</h3>
+        <button onclick="closeModal('detailModal')" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1 text-sm text-slate-800 dark:text-slate-350" id="detailModal-body">
+         <!-- Populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Completed Tickets list split-modal -->
+  <div id="itCompletedModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+     <div class="bg-white dark:bg-darkCard w-full max-w-5xl h-[80vh] rounded-3xl overflow-hidden flex flex-col md:flex-row shadow-2xl scale-95 transition-transform duration-300 modal-anim border dark:border-darkBorder">
+        <!-- Left Side: List -->
+        <div class="w-full md:w-80 border-r border-slate-100 dark:border-slate-800 flex flex-col h-full bg-slate-50/50 dark:bg-slate-900/10">
+           <div class="p-4 border-b border-slate-100 dark:border-slate-850 flex justify-between items-center bg-white dark:bg-darkCard">
+              <h3 class="font-bold text-slate-900 dark:text-white text-base">ตั๋วงานบริการที่เสร็จสิ้น</h3>
+              <button onclick="closeModal('itCompletedModal')" class="md:hidden text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+           </div>
+           <div id="it-completed-list" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+        </div>
+        <!-- Right Side: Details -->
+        <div class="flex-1 flex flex-col h-full bg-white dark:bg-darkCard">
+           <div class="p-4 border-b border-slate-100 dark:border-slate-850 flex justify-between items-center">
+              <span class="text-xs font-bold text-slate-400">ตัวอย่างตั๋วที่ดำเนินการเสร็จสิ้น</span>
+              <button onclick="closeModal('itCompletedModal')" class="hidden md:block text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+           </div>
+           <div id="it-completed-detail" class="flex-1 overflow-y-auto p-6 text-sm"></div>
+        </div>
+     </div>
+  </div>
+
+  <script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIkAhnfLFwEsF2pZNNjwXqrfYQc19Ye5RhsODwTLFDJvWqUwlGwiQDnlHBu4fHsiJ7/exec";
+    
+    let mockITData = [];
+    let filteredData = [];
+    let googleSheetUrl = "https://docs.google.com/spreadsheets/d/1Xl2yP3fG9h7K4e3v1U_W2Z1y7f-VqQc/edit";
+    let currentTab = "dashboard";
+    let activeUpdatingITId = null;
+
+    // Pagination
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
+    let chart1Instance = null;
+    let chart2Instance = null;
+
+    // Load credentials on startup
+    const loggedUsername = localStorage.getItem('tasky_username') || "IT Support Team";
+    document.getElementById('dashboard-username').innerText = loggedUsername;
+    
+    // Initialize Theme
+    if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+       document.documentElement.classList.add('dark');
+       document.getElementById('theme-icon').className = "fa-solid fa-moon text-lg";
+    }
+
+    window.onload = async () => {
+       await loadData();
+    };
+
+    function toggleDarkMode() {
+       const isDark = document.documentElement.classList.toggle('dark');
+       localStorage.setItem('theme', isDark ? 'dark' : 'light');
+       document.getElementById('theme-icon').className = isDark ? "fa-solid fa-moon text-lg" : "fa-solid fa-sun text-lg";
+       rebuildCharts();
+    }
+
+    async function loadData() {
+       document.getElementById('current-role-desc').innerText = "กำลังเชื่อมโยงข้อมูลจาก Google Sheet Database...";
+       await initITData();
+       applyFilters();
+    }
+
+    async function initITData() {
+       try {
+          const response = await fetch(`${APPS_SCRIPT_URL}?type=it_support`);
+          const resData = await response.json();
+          
+          if (resData && resData.status === "success") {
+             googleSheetUrl = resData.spreadsheetUrl || googleSheetUrl;
+             mockITData = resData.tickets.map(t => {
+                return {
+                   id: t.id,
+                   name: t.name,
+                   lineId: t.lineId,
+                   prob: t.problem,
+                   sol: t.solution,
+                   type: t.type,
+                   status: t.status,
+                   start: t.start,
+                   due: t.start,
+                   priority: t.priority
+                };
+             });
+             localStorage.setItem('tasky_it_tickets', JSON.stringify(mockITData));
+             document.getElementById('current-role-desc').innerText = `อัปเดตข้อมูลตั๋วงานบริการล่าสุดสำเร็จ! (เวลา: ${new Date().toLocaleTimeString('th-TH')} น.)`;
+          } else {
+             loadCachedITData();
+             document.getElementById('current-role-desc').innerText = "แสดงตั๋วงานจากแคชผู้ใช้ (ชีทรายงานผิดพลาด)";
+          }
+       } catch (err) {
+          console.warn("Failed connecting to Sheets API, loading local cache:", err);
+          loadCachedITData();
+          document.getElementById('current-role-desc').innerText = "แสดงตั๋วงานจำลอง/แคช เนื่องจากเชื่อมต่อชีทไม่ได้";
+       }
+    }
+
+    function loadCachedITData() {
+       const localIT = localStorage.getItem('tasky_it_tickets');
+       if (localIT) {
+          const parsed = JSON.parse(localIT);
+          mockITData = parsed.filter(t => t.id && t.id.startsWith('IT-'));
+       } else {
+          // Fallback mocks
+          mockITData = [];
+          const priorities = ['High', 'Medium', 'Low'];
+          const types = ['Support', 'Install'];
+          const todayStr = new Date().toISOString().substring(0, 10);
+          for(let i=1; i<=15; i++) {
+             mockITData.push({
+                id: `IT-${1000 + i}`,
+                name: `ตั๋วซ่อมบำรุงและติดตั้งเครื่องมือไอที เคสที่ ${i}`,
+                lineId: `@user_${i}`,
+                prob: `เกิดข้อผิดพลาดด้านเทคนิคขณะใช้งานระบบเครือข่ายส่วนกลาง #${i}`,
+                sol: `เจ้าหน้าที่ดูแลแก้ไขระบบ เรียบร้อยแล้ว`,
+                type: types[i % 2],
+                status: i % 3 === 0 ? 'เสร็จสิ้น' : 'กำลังดำเนินการ',
+                start: todayStr,
+                due: todayStr,
+                priority: priorities[i % 3]
+             });
+          }
+       }
+    }
+
+    async function submitITTask() {
+         const name = document.getElementById('it-name').value;
+         const lineId = document.getElementById('it-line').value;
+         const type = document.getElementById('it-type').value;
+         const prob = document.getElementById('it-prob').value;
+         const sol = document.getElementById('it-sol').value;
+         const priority = document.getElementById('it-prio').value;
+         const start = document.getElementById('it-start').value || new Date().toISOString().substring(0, 10);
+
+         if (!name || !lineId || !prob) {
+            alert("กรุณากรอกข้อมูล ชื่องาน, Line ID, และปัญหาให้ครบถ้วน!");
+            return;
+         }
+
+         closeModal('itSupportTaskModal');
+         document.getElementById('current-role-desc').innerText = "กำลังเขียนตั๋วงานลง Google Sheet...";
+         
+         const ticketData = {
+            name: name,
+            lineId: lineId,
+            type: type,
+            priority: priority,
+            start: start,
+            status: "กำลังดำเนินการ",
+            problem: prob,
+            solution: sol
+         };
+
+         try {
+            const payload = {
+               action: "create_it_ticket",
+               ticketData: ticketData
+            };
+            
+            const response = await fetch(APPS_SCRIPT_URL, {
+               method: 'POST',
+               headers: { 'Content-Type': 'text/plain' },
+               body: JSON.stringify(payload)
+            });
+            const res = await response.json();
+            
+            if (res && res.status === 'success') {
+               document.getElementById('current-role-desc').innerText = `สร้างตั๋ว ${res.ticketId} ใน Google Sheet สำเร็จ!`;
+               
+               // Reset form
+               document.getElementById('it-name').value = "";
+               document.getElementById('it-line').value = "";
+               document.getElementById('it-prob').value = "";
+               document.getElementById('it-sol').value = "";
+               
+               await initITData();
+               applyFilters();
+            } else {
+               alert(`ไม่สามารถสร้างตั๋วใน Google Sheet ได้: ${res.message}`);
+            }
+         } catch (err) {
+            console.error("Error creating ticket in Google Sheets:", err);
+            alert("บันทึกขัดข้อง: เชื่อมต่อ Google Sheets ล้มเหลว");
+         }
+    }
+
+    async function updateITStatus() {
+        const newStatus = document.getElementById('it-update-status').value;
+        
+        const ticket = mockITData.find(t => t.id === activeUpdatingITId);
+        if (!ticket) return;
+        
+        const updatedTicket = { ...ticket, status: newStatus };
+        
+        // Optimistic UI update
+        mockITData = mockITData.map(t => t.id === activeUpdatingITId ? updatedTicket : t);
+        applyFilters();
+        closeModal('detailModal');
+        
+        document.getElementById('current-role-desc').innerText = `กำลังบันทึกสถานะตั๋วงาน ${activeUpdatingITId} ลง Google Sheet...`;
+        
+        try {
+           const payload = {
+              action: "update_it_ticket",
+              ticketData: {
+                 id: updatedTicket.id,
+                 name: updatedTicket.name,
+                 lineId: updatedTicket.lineId,
+                 type: updatedTicket.type,
+                 priority: updatedTicket.priority,
+                 start: updatedTicket.start,
+                 status: updatedTicket.status,
+                 problem: updatedTicket.prob,
+                 solution: updatedTicket.sol
+              }
+           };
+           
+           const response = await fetch(APPS_SCRIPT_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain' },
+              body: JSON.stringify(payload)
+           });
+           const res = await response.json();
+           
+           if (res && res.status === 'success') {
+              document.getElementById('current-role-desc').innerText = `อัปเดตตั๋ว ${updatedTicket.id} ลง Google Sheet สำเร็จ!`;
+              await initITData();
+              applyFilters();
+           } else {
+               alert(`ไม่สามารถบันทึกลง Google Sheet ได้: ${res.message}`);
+           }
+        } catch (err) {
+           console.error("Error updating IT support ticket:", err);
+           document.getElementById('current-role-desc').innerText = `อัปเดตล้มเหลว: เชื่อมต่อชีทขัดข้อง`;
+        }
+    }
+
+    function setTab(tabName) {
+       currentTab = tabName;
+       
+       document.getElementById('tab-content-dashboard').classList.add('hidden');
+       document.getElementById('tab-content-tasklist').classList.add('hidden');
+       
+       document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+       
+       document.getElementById('menu-dashboard').className = tabName === 'dashboard' ? 
+         "w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left" : 
+         "w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left";
+         
+       document.getElementById('menu-tasklist').className = tabName === 'tasklist' ? 
+         "w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left" : 
+         "w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left";
+       
+       applyFilters();
+       closeMobileSidebar();
+    }
+
+    function logoutToPortal() {
+       localStorage.removeItem('tasky_username');
+       localStorage.removeItem('tasky_role');
+       window.location.href = 'index.html';
+    }
+
+    function toggleMobileSidebar() {
+       const sidebar = document.getElementById('sidebar-container');
+       const backdrop = document.getElementById('sidebar-backdrop');
+       sidebar.classList.toggle('-translate-x-full');
+       backdrop.classList.toggle('hidden');
+    }
+
+    function closeMobileSidebar() {
+       const sidebar = document.getElementById('sidebar-container');
+       const backdrop = document.getElementById('sidebar-backdrop');
+       sidebar.classList.add('-translate-x-full');
+       backdrop.classList.add('hidden');
+    }
+
+    function applyFilters() {
+       let searchFiltered = [...mockITData];
+       
+       if (currentTab === 'tasklist') {
+          const query = document.getElementById('filter-search').value.toLowerCase().trim();
+          const typeVal = document.getElementById('filter-type').value;
+          const prioVal = document.getElementById('filter-priority').value;
+          const statVal = document.getElementById('filter-status').value;
+
+          searchFiltered = mockITData.filter(item => {
+             if (typeVal !== 'all' && item.type !== typeVal) return false;
+             if (prioVal !== 'all' && item.priority !== prioVal) return false;
+             if (statVal !== 'all' && item.status !== statVal) return false;
+             
+             if (query) {
+                const idMatch = item.id.toLowerCase().includes(query);
+                const nameMatch = item.name.toLowerCase().includes(query);
+                const probMatch = item.prob.toLowerCase().includes(query);
+                if (!idMatch && !nameMatch && !probMatch) return false;
+             }
+             return true;
+          });
+       }
+
+       // Update stats
+       let total = mockITData.length;
+       let active = mockITData.filter(t => t.status === 'กำลังดำเนินการ').length;
+       let done = mockITData.filter(t => t.status === 'เสร็จสิ้น' || t.status === 'Completed').length;
+
+       document.getElementById('stat-total').innerText = total;
+       document.getElementById('stat-active').innerText = active;
+       document.getElementById('stat-done').innerText = done;
+
+       currentPage = 1;
+       if (currentTab === 'dashboard') {
+          renderRecentTasksTable();
+          rebuildCharts();
+       } else if (currentTab === 'tasklist') {
+          renderTasklistTable(searchFiltered);
+       }
+    }
+
+    function renderRecentTasksTable() {
+       const container = document.getElementById('recent-tasks-container');
+       container.innerHTML = "";
+       
+       let sliceData = mockITData.slice(0, 5);
+       if (sliceData.length === 0) {
+          container.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">ไม่พบข้อมูลตั๋วงานไอที</div>`;
+          return;
+       }
+       
+       let html = `
+         <table class="w-full text-left border-collapse">
+            <thead>
+               <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-darkBorder">
+                  <th class="p-3 pl-5">ID</th>
+                  <th class="p-3">ชื่องาน (Task Name)</th>
+                  <th class="p-3">สถานะ</th>
+                  <th class="p-3 text-center">Actions</th>
+               </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-darkBorder text-sm">
+       `;
+       
+       sliceData.forEach(t => {
+          const statusCls = (t.status === 'เสร็จสิ้น' || t.status === 'Completed') ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
+          html += `
+             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="p-3 pl-5 font-bold text-blue-500">${t.id}</td>
+                <td class="p-3 font-semibold text-slate-900 dark:text-white truncate max-w-xs">${t.name}</td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusCls}">${t.status}</span></td>
+                <td class="p-3 text-center">
+                   <button onclick="openDetailModal('it', '${t.id}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-xs font-bold transition text-slate-600 dark:text-slate-300">
+                     <i class="fa-solid fa-eye"></i> ดูตั๋ว
+                   </button>
+                </td>
+             </tr>
+          `;
+       });
+       
+       html += `</tbody></table>`;
+       container.innerHTML = html;
+    }
+
+    function renderTasklistTable(dataList) {
+       const tbody = document.getElementById('table-tbody');
+       tbody.innerHTML = "";
+       
+       const totalItems = dataList.length;
+       
+       if (totalItems === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-xs">ไม่พบตั๋วงานบริการตรงตามเงื่อนไข</td></tr>`;
+          document.getElementById('table-info').innerText = "Showing 0 of 0 entries";
+          document.getElementById('table-pagination').innerHTML = "";
+          return;
+       }
+       
+       const startIndex = (currentPage - 1) * itemsPerPage;
+       const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+       const paginatedData = dataList.slice(startIndex, endIndex);
+       
+       paginatedData.forEach(item => {
+          let prioColor = '';
+          if (item.priority === 'High') prioColor = 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400';
+          else if (item.priority === 'Medium') prioColor = 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400';
+          else prioColor = 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-355';
+          
+          const statusCls = (item.status === 'เสร็จสิ้น' || item.status === 'Completed') ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
+          
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors";
+          tr.innerHTML = `
+             <td class="p-3 pl-5 font-bold text-blue-500">${item.id}</td>
+             <td class="p-3 font-semibold text-slate-900 dark:text-white truncate max-w-sm">${item.name}</td>
+             <td class="p-3 font-medium text-slate-500 dark:text-slate-400">${item.lineId}</td>
+             <td class="p-3 font-bold text-slate-455">${item.type}</td>
+             <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold inline-block ${prioColor}">${item.priority}</span></td>
+             <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusCls}">${item.status}</span></td>
+             <td class="p-3 text-center">
+                <button onclick="openDetailModal('it', '${item.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-xs font-bold transition text-slate-600 dark:text-slate-300">
+                  <i class="fa-solid fa-eye"></i> ดูตั๋ว
+                </button>
+             </td>
+          `;
+          tbody.appendChild(tr);
+       });
+       
+       document.getElementById('table-info').innerText = `Showing ${startIndex + 1} to ${endIndex} of ${totalItems} entries`;
+       renderPaginationControls(totalItems, dataList);
+    }
+
+    function renderPaginationControls(totalItems, dataList) {
+       const pagEl = document.getElementById('table-pagination');
+       pagEl.innerHTML = "";
+       
+       const totalPages = Math.ceil(totalItems / itemsPerPage);
+       if (totalPages <= 1) return;
+       
+       const prevBtn = document.createElement('button');
+       prevBtn.disabled = currentPage === 1;
+       prevBtn.className = "p-1.5 px-3 rounded-lg text-xs font-bold bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 disabled:opacity-50 text-slate-600 dark:text-slate-400 transition";
+       prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
+       prevBtn.onclick = () => { currentPage--; renderTasklistTable(dataList); };
+       pagEl.appendChild(prevBtn);
+       
+       for (let i = 1; i <= totalPages; i++) {
+          const btn = document.createElement('button');
+          btn.className = `p-1.5 px-3 rounded-lg text-xs font-bold transition ${currentPage === i ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100'}`;
+          btn.innerText = i;
+          btn.onclick = () => { currentPage = i; renderTasklistTable(dataList); };
+          pagEl.appendChild(btn);
+       }
+       
+       const nextBtn = document.createElement('button');
+       nextBtn.disabled = currentPage === totalPages;
+       nextBtn.className = "p-1.5 px-3 rounded-lg text-xs font-bold bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 disabled:opacity-50 text-slate-600 dark:text-slate-400 transition";
+       nextBtn.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+       nextBtn.onclick = () => { currentPage++; renderTasklistTable(dataList); };
+       pagEl.appendChild(nextBtn);
+    }
+
+    function rebuildCharts() {
+       renderCharts();
+    }
+
+    function destroyCharts() {
+       if (chart1Instance) { chart1Instance.destroy(); chart1Instance = null; }
+       if (chart2Instance) { chart2Instance.destroy(); chart2Instance = null; }
+    }
+
+    function getThemeTextColor() {
+       return document.documentElement.classList.contains('dark') ? '#94a3b8' : '#475569';
+    }
+
+    function renderCharts() {
+       destroyCharts();
+       const txtColor = getThemeTextColor();
+       
+       let active = mockITData.filter(t => t.status === 'กำลังดำเนินการ').length;
+       let done = mockITData.filter(t => t.status === 'เสร็จสิ้น' || t.status === 'Completed').length;
+       let high = mockITData.filter(t => t.priority === 'High').length;
+       let medium = mockITData.filter(t => t.priority === 'Medium').length;
+       let low = mockITData.filter(t => t.priority === 'Low').length;
+
+       // Chart 1: pie status
+       const ctx1 = document.getElementById('chart1').getContext('2d');
+       chart1Instance = new Chart(ctx1, {
+          type: 'pie',
+          data: {
+             labels: ['กำลังดำเนินการ', 'เสร็จสิ้น'],
+             datasets: [{
+                data: [active, done],
+                backgroundColor: ['#2ea2f8', '#10b981'],
+                borderWidth: 0
+             }]
+          },
+          options: {
+             responsive: true,
+             maintainAspectRatio: false,
+             plugins: {
+                legend: { position: 'bottom', labels: { color: txtColor } }
+             }
+          }
+       });
+
+       // Chart 2: bar priority
+       const ctx2 = document.getElementById('chart2').getContext('2d');
+       chart2Instance = new Chart(ctx2, {
+          type: 'bar',
+          data: {
+             labels: ['Low', 'Medium', 'High'],
+             datasets: [{
+                label: 'จำนวนตั๋วงาน',
+                data: [low, medium, high],
+                backgroundColor: ['#64748b', '#f59e0b', '#ef4444'],
+                borderRadius: 6
+             }]
+          },
+          options: {
+             responsive: true,
+             maintainAspectRatio: false,
+             plugins: { legend: { display: false } },
+             scales: {
+                x: { ticks: { color: txtColor } },
+                y: { ticks: { color: txtColor } }
+             }
+          }
+       });
+    }
+
+    function openDetailModal(type, id) {
+       activeUpdatingITId = id;
+       const detailEl = document.getElementById('detailModal-body');
+       detailEl.innerHTML = "";
+
+       const ticket = mockITData.find(t => t.id === id);
+       if (!ticket) return;
+
+       let prioColor = '';
+       if (ticket.priority === 'High') prioColor = 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400';
+       else if (ticket.priority === 'Medium') prioColor = 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400';
+       else prioColor = 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-355';
+
+       const statusOptions = `
+          <select id="it-update-status" class="px-2.5 py-1.5 border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg text-xs font-semibold focus:outline-none focus:border-blue-500 text-slate-800 dark:text-white mr-2">
+             <option value="กำลังดำเนินการ" ${ticket.status === 'กำลังดำเนินการ' ? 'selected' : ''}>กำลังดำเนินการ</option>
+             <option value="เสร็จสิ้น" ${ticket.status === 'เสร็จสิ้น' || ticket.status === 'Completed' ? 'selected' : ''}>เสร็จสิ้น</option>
+          </select>
+       `;
+
+       detailEl.innerHTML = `
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-darkBorder">
+             <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">IT Support Ticket</span>
+             <span class="text-xs font-bold text-slate-455">ID: ${ticket.id}</span>
+          </div>
+          <div class="mt-6 space-y-5">
+             <div>
+                <span class="text-[10px] text-slate-455 font-bold block mb-1">ชื่องาน (Task Name)</span>
+                <div class="text-base font-bold text-slate-900 dark:text-white">${ticket.name}</div>
+             </div>
+             <div class="grid grid-cols-2 gap-4">
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                   <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">Line ID ผู้แจ้ง</span>
+                   <span class="font-bold text-slate-800 dark:text-white text-xs"><i class="fa-brands fa-line text-emerald-500 mr-1.5"></i>${ticket.lineId}</span>
+                </div>
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                   <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">ประเภท</span>
+                   <span class="font-bold text-slate-800 dark:text-white text-xs">${ticket.type}</span>
+                </div>
+             </div>
+             <div class="grid grid-cols-2 gap-4">
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                   <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">ความเร่งด่วน</span>
+                   <span class="font-bold text-xs ${prioColor}">${ticket.priority}</span>
+                </div>
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                   <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">วันที่แจ้ง</span>
+                   <span class="font-bold text-slate-600 dark:text-slate-400 text-xs">${ticket.start}</span>
+                </div>
+             </div>
+             <div>
+                <span class="text-[10px] text-slate-455 font-bold block mb-1">รายละเอียดปัญหา</span>
+                <div class="text-sm bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-darkBorder whitespace-pre-wrap leading-relaxed text-slate-700 dark:text-slate-355">${ticket.prob || 'ไม่มีรายละเอียด'}</div>
+             </div>
+             <div>
+                <span class="text-[10px] text-slate-455 font-bold block mb-1">วิธีการแก้ไขปัญหา</span>
+                <div class="text-sm bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-darkBorder whitespace-pre-wrap leading-relaxed text-slate-700 dark:text-slate-355">${ticket.sol || 'ไม่มีการบันทึกแก้ไข'}</div>
+             </div>
+             
+             <!-- Update Status Pane -->
+             <div class="p-4 bg-slate-50 dark:bg-slate-800/20 rounded-xl border border-slate-100 dark:border-darkBorder flex items-center justify-between mt-4">
+                <div>
+                   <span class="text-xs font-bold text-slate-700 dark:text-white block mb-0.5">เปลี่ยนสถานะตั๋วงาน</span>
+                   <span class="text-[10px] text-slate-400">ซิงค์บันทึกลงชีทโดยตรง</span>
+                </div>
+                <div class="flex items-center">
+                   ${statusOptions}
+                   <button onclick="updateITStatus()" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-sm">บันทึก</button>
+                </div>
+             </div>
+          </div>
+       `;
+       openModal('detailModal');
+    }
+
+    function openITCompletedModal() {
+       const listEl = document.getElementById('it-completed-list');
+       const detailEl = document.getElementById('it-completed-detail');
+       listEl.innerHTML = "";
+       detailEl.innerHTML = '<div class="flex-1 flex items-center justify-center text-slate-400 text-sm"><i class="fa-solid fa-circle-info mr-2"></i>เลือกชื่องานทางซ้ายมือเพื่อดูรายละเอียด</div>';
+       
+       const completedTickets = mockITData.filter(t => t.status === 'เสร็จสิ้น' || t.status === 'Completed');
+       
+       if (completedTickets.length === 0) {
+          listEl.innerHTML = '<p class="text-center text-slate-400 text-xs mt-4">ไม่มีตั๋วงานที่เสร็จสิ้น</p>';
+          openModal('itCompletedModal');
+          return;
+       }
+       
+       completedTickets.forEach((ticket) => {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'p-3 rounded-xl cursor-pointer border border-transparent hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-semibold text-slate-850 dark:text-slate-200 flex flex-col gap-1 item-completed-node';
+          itemDiv.id = 'node-' + ticket.id;
+          itemDiv.onclick = () => selectITCompletedNode(ticket.id);
+          itemDiv.innerHTML = '<div class="flex justify-between items-center"><span class="text-[10px] text-blue-500 font-bold">' + ticket.id + '</span><span class="text-[10px] text-slate-455">' + ticket.start + '</span></div><span class="truncate block max-w-full font-bold">' + ticket.name + '</span>';
+          listEl.appendChild(itemDiv);
+       });
+       
+       openModal('itCompletedModal');
+       selectITCompletedNode(completedTickets[0].id);
+    }
+    
+    function selectITCompletedNode(ticketId) {
+       document.querySelectorAll('.item-completed-node').forEach(el => {
+          el.classList.remove('bg-blue-50', 'dark:bg-blue-950/40', 'text-blue-600', 'dark:text-blue-400', 'border-l-4', 'border-blue-500');
+          el.classList.add('hover:bg-slate-100', 'dark:hover:bg-slate-800');
+       });
+       
+       const activeNode = document.getElementById('node-' + ticketId);
+       if (activeNode) {
+          activeNode.classList.add('bg-blue-50', 'dark:bg-blue-950/40', 'text-blue-600', 'dark:text-blue-400', 'border-l-4', 'border-blue-500');
+          activeNode.classList.remove('hover:bg-slate-100', 'dark:hover:bg-slate-800');
+       }
+       
+       const ticket = mockITData.find(t => t.id === ticketId);
+       const detailEl = document.getElementById('it-completed-detail');
+       if (!ticket) return;
+       
+       let prioColor = '';
+       if (ticket.priority === 'High') prioColor = 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400';
+       else if (ticket.priority === 'Medium') prioColor = 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400';
+       else prioColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-355';
+       
+       detailEl.innerHTML = `
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-darkBorder">
+             <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-lg uppercase"><i class="fa-solid fa-circle-check mr-1.5"></i>เสร็จสิ้นปิดงาน</span>
+             <span class="text-xs font-bold text-slate-455 font-semibold">ID: ${ticket.id}</span>
+          </div>
+          <div class="mt-6 space-y-5">
+             <div>
+                <h4 class="text-xs font-bold text-slate-400 uppercase mb-1.5">ชื่องาน (Task Name)</h4>
+                <div class="text-base font-bold text-slate-900 dark:text-white">${ticket.name}</div>
+             </div>
+             <div class="grid grid-cols-2 gap-4">
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                   <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">Line ID ผู้แจ้ง</span>
+                   <span class="font-bold text-slate-800 dark:text-white text-xs"><i class="fa-brands fa-line text-emerald-500 mr-1.5"></i>${ticket.lineId}</span>
+                </div>
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                   <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">ประเภท</span>
+                   <span class="font-bold text-slate-800 dark:text-white text-xs">${ticket.type}</span>
+                </div>
+             </div>
+             <div class="grid grid-cols-2 gap-4">
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                   <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">ความเร่งด่วน</span>
+                   <span class="px-2 py-0.5 rounded text-[10px] font-bold inline-block ${prioColor}">${ticket.priority}</span>
+                </div>
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                   <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">วันที่สร้าง (Start)</span>
+                   <span class="font-bold text-slate-600 dark:text-slate-400 text-xs">${ticket.start}</span>
+                </div>
+             </div>
+             <div>
+                <h4 class="text-xs font-bold text-slate-400 uppercase mb-1.5">ปัญหาที่พบ</h4>
+                <div class="text-sm bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-darkBorder whitespace-pre-wrap leading-relaxed text-slate-700 dark:text-slate-350">${ticket.prob || 'ไม่มีรายละเอียด'}</div>
+             </div>
+             <div>
+                <h4 class="text-xs font-bold text-slate-400 uppercase mb-1.5">วิธีการแก้ไขปัญหา</h4>
+                <div class="text-sm bg-emerald-50/50 dark:bg-emerald-950/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/40 whitespace-pre-wrap leading-relaxed text-emerald-800 dark:text-emerald-300 font-medium"><i class="fa-solid fa-wrench mr-2 text-emerald-500"></i>${ticket.sol || 'ไม่มีการแก้ไขปัญหาบันทึกไว้'}</div>
+             </div>
+          </div>
+       `;
+    }
+
+    function openModal(id) {
+       const modal = document.getElementById(id);
+       modal.classList.remove('hidden');
+       setTimeout(() => {
+          modal.firstElementChild.classList.replace('scale-95', 'scale-100');
+       }, 50);
+    }
+
+    function closeModal(id) {
+       const modal = document.getElementById(id);
+       modal.firstElementChild.classList.replace('scale-100', 'scale-95');
+       setTimeout(() => {
+          modal.classList.add('hidden');
+       }, 150);
+    }
+  </script>
+</body>
+</html>

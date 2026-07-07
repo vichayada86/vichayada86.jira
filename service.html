@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasky - Service Request Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { 
+        extend: { 
+          colors: { 
+            primaryBlue: '#2ea2f8', 
+            darkBg: '#0f172a', 
+            darkCard: '#1e293b', 
+            darkBorder: '#334155' 
+          } 
+        } 
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Kanit', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    
+    /* Animation classes */
+    .fade-in { animation: fadeIn 0.4s ease-in-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-darkBg dark:text-slate-100 transition-colors duration-200 min-h-screen flex flex-col">
+
+  <!-- MAIN DASHBOARD LAYOUT -->
+  <div id="main-layout" class="flex min-h-screen">
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebar-backdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-35 hidden md:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar-container" class="w-72 bg-white dark:bg-darkCard border-r border-slate-200 dark:border-darkBorder p-6 fixed inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0 md:static md:block flex-shrink-0 transition-transform duration-300">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-blue-500/30">T</div>
+        <div>
+          <h1 class="font-bold text-xl leading-none text-slate-900 dark:text-white">Tasky</h1>
+          <span class="text-sm text-slate-400">Jira & Sheets System</span>
+        </div>
+      </div>
+      
+      <nav class="space-y-2">
+        <button id="menu-dashboard" class="w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left">
+          <i class="fa-solid fa-chart-pie text-lg w-6"></i> <span>แดชบอร์ด</span>
+        </button>
+
+        <div class="pt-6 border-t border-slate-100 dark:border-darkBorder mt-6">
+          <button onclick="logoutToPortal()" class="w-full flex items-center gap-3.5 px-4 py-3 text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl transition text-left font-semibold">
+            <i class="fa-solid fa-right-from-bracket text-base w-6"></i> ออกจากระบบ 
+          </button>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Workspace Pane -->
+    <main class="flex-1 p-6 md:p-8 overflow-y-auto max-w-[1600px] mx-auto w-full flex flex-col">
+      <!-- Workspace Header -->
+      <header class="flex justify-between items-center mb-8 bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm">
+        <div class="flex items-center gap-3">
+          <button onclick="toggleMobileSidebar()" class="md:hidden p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300">
+            <i class="fa-solid fa-bars text-lg"></i>
+          </button>
+          <div>
+            <h2 id="current-role-title" class="text-xl font-bold text-slate-955 dark:text-white">🛎️ หน้าต่างการติดตามงาน (Service Request)</h2>
+            <p id="current-role-desc" class="text-sm text-slate-500 dark:text-slate-400">กำลังเชื่อมต่อข้อมูล...</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <!-- Refresh Button -->
+          <button onclick="loadData()" class="p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300" title="ดึงข้อมูลล่าสุด">
+            <i class="fa-solid fa-arrows-rotate text-lg"></i>
+          </button>
+
+          <!-- Dark Mode Toggle -->
+          <button onclick="toggleDarkMode()" class="p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300 mr-4">
+            <i id="theme-icon" class="fa-solid fa-sun text-lg"></i>
+          </button>
+          
+          <!-- Profile Badge -->
+          <div class="flex items-center gap-3">
+            <div id="user-avatar" class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-sm">SR</div>
+            <div class="hidden sm:block text-left">
+              <p id="dashboard-username" class="text-sm font-semibold leading-tight">Service Client</p>
+              <p id="user-sub-role" class="text-xs text-slate-400">คำขอใช้บริการระบบ • Service Client</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ==================== TAB: DASHBOARD ==================== -->
+      <div id="tab-content-dashboard" class="space-y-8 fade-in">
+        <!-- KPI Metrics Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- KPI 2 (Total) -->
+          <div class="bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400">งานทั้งหมด</p>
+            <h3 id="stat-total" class="text-3xl font-bold mt-2 text-slate-900 dark:text-white">0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-blue-50 dark:bg-blue-950/50 text-blue-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-layer-group"></i></div>
+          </div>
+          <!-- KPI 3 (Active) -->
+          <div class="bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400">งานกำลังดำเนินการ</p>
+            <h3 id="stat-active" class="text-3xl font-bold mt-2 text-blue-500">0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-blue-50 dark:bg-blue-950/50 text-blue-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-spinner animate-spin"></i></div>
+          </div>
+          <!-- KPI 4 (Done) -->
+          <div class="bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+            <p class="text-sm font-medium text-slate-500 dark:text-slate-400">เสร็จสิ้น</p>
+            <h3 id="stat-done" class="text-3xl font-bold mt-2 text-emerald-500">0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-circle-check"></i></div>
+          </div>
+        </section>
+
+        <!-- Charts Pane -->
+        <section id="charts-section" class="grid grid-cols-1 lg:grid-cols-3 gap-6 transition-all">
+          <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm flex flex-col justify-between lg:col-span-1">
+            <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4">กราฟสถานะของงาน</h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chart1"></canvas>
+            </div>
+          </div>
+          
+          <!-- Space & Epic Progress Column -->
+          <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm flex flex-col justify-between lg:col-span-2">
+             <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4">ความคืบหน้าของงาน (Space & Epic Progress)</h4>
+             <div id="space-epic-container" class="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+                <!-- Populated dynamically -->
+             </div>
+          </div>
+        </section>
+
+        <!-- Recent Tasks Panel (Active Spaces & Issues) -->
+        <section id="recent-tasks-panel" class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm overflow-hidden p-6">
+           <h4 class="text-base font-bold mb-4 text-slate-900 dark:text-white">ตารางตารางคิวงานล่าสุด (สเปซที่กำลังทำ)</h4>
+           <div id="recent-tasks-container" class="overflow-x-auto">
+               <!-- Populated dynamically -->
+           </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== MODALS & POPUPS ==================== -->
+  
+  <!-- MODAL: Task Details Modal -->
+  <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-darkCard w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden scale-95 transition-transform duration-300 modal-anim border dark:border-darkBorder flex flex-col max-h-[85vh]">
+      <div class="p-5 border-b border-slate-100 dark:border-darkBorder flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+        <h3 class="font-bold text-slate-900 dark:text-white text-base">รายละเอียดตั๋วงาน Jira</h3>
+        <button onclick="closeModal('detailModal')" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1 text-sm text-slate-800 dark:text-slate-355" id="detailModal-body">
+         <!-- Populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIkAhnfLFwEsF2pZNNjwXqrfYQc19Ye5RhsODwTLFDJvWqUwlGwiQDnlHBu4fHsiJ7/exec";
+    
+    let rawJiraData = [];
+    let chart1Instance = null;
+
+    // Initialize Theme
+    if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+       document.documentElement.classList.add('dark');
+       document.getElementById('theme-icon').className = "fa-solid fa-moon text-lg";
+    }
+
+    window.onload = async () => {
+       await loadData();
+    };
+
+    function toggleDarkMode() {
+       const isDark = document.documentElement.classList.toggle('dark');
+       localStorage.setItem('theme', isDark ? 'dark' : 'light');
+       document.getElementById('theme-icon').className = isDark ? "fa-solid fa-moon text-lg" : "fa-solid fa-sun text-lg";
+       renderCharts();
+    }
+
+    async function loadData() {
+       document.getElementById('current-role-desc').innerText = "กำลังซิงค์คิวงานสะสมจาก Jira API ล่าสุด...";
+       
+       try {
+          const response = await fetch(APPS_SCRIPT_URL);
+          const res = await response.json();
+          
+          if (res && res.status === 'success') {
+             rawJiraData = res.issues.map(item => {
+                return {
+                   key: item.key,
+                   project: item.project,
+                   summary: item.summary,
+                   type: item.type,
+                   status: item.status,
+                   rawStatus: item.rawStatus,
+                   assignee: item.assignee,
+                   priority: item.priority,
+                   created: item.created,
+                   link: item.link,
+                   desc: item.desc || '',
+                   value: item.value || 0
+                };
+             });
+             document.getElementById('current-role-desc').innerText = `อัปเดตข้อมูลล่าสุดสำเร็จ! (เวลา: ${new Date().toLocaleTimeString('th-TH')} น.)`;
+          } else {
+             generateMockJiraData();
+             document.getElementById('current-role-desc').innerText = "แสดงผลด้วยข้อมูลจำลอง (ดึงข้อมูลไม่สำเร็จ)";
+          }
+       } catch (err) {
+          console.error("Failed connecting to Apps Script:", err);
+          generateMockJiraData();
+          document.getElementById('current-role-desc').innerText = "แสดงผลด้วยข้อมูลจำลอง (เชื่อมต่อเครือข่ายล้มเหลว)";
+       }
+
+       applyFilters();
+    }
+
+    function generateMockJiraData() {
+       const todayStr = new Date().toISOString().substring(0, 10);
+       rawJiraData = [];
+       const assignees = ['เมย์', 'ตะวัน', 'Unassigned'];
+       const projects = ['Tasky', 'Core Tech', 'Web portal'];
+       for(let i=1; i<=15; i++) {
+           const typeNum = i % 3;
+           const statusNum = i % 2;
+           const prioNum = i % 3;
+           rawJiraData.push({
+               key: `TAS-${i.toString().padStart(3,'0')}`,
+               project: projects[i % projects.length],
+               summary: i%2===0 ? `พัฒนาระบบหลังบ้าน งานที่ ${i}` : `แก้ไขหน้าล็อกอินงานเทคโนโลยี #${i}`,
+               type: typeNum === 0 ? 'Support' : (typeNum === 1 ? 'Install' : 'R&D'),
+               status: statusNum === 0 ? 'เสร็จสิ้น' : 'กำลังดำเนินการ',
+               rawStatus: statusNum === 0 ? 'Done' : 'In Progress',
+               assignee: assignees[i % assignees.length],
+               priority: prioNum === 0 ? 'High' : (prioNum === 1 ? 'Medium' : 'Low'),
+               created: i%2 === 0 ? todayStr : '2026-06-15',
+               link: `https://vichayada.atlassian.net/browse/TAS-${i.toString().padStart(3,'0')}`,
+               desc: 'รายละเอียดจำลองการทำงานของระบบควบคุมคิวตั๋วงาน Jira Cloud...',
+               value: prioNum === 0 ? 100000 : (prioNum === 1 ? 50000 : 25000)
+           });
+       }
+    }
+
+    function logoutToPortal() {
+       localStorage.removeItem('tasky_username');
+       localStorage.removeItem('tasky_role');
+       window.location.href = 'index.html';
+    }
+
+    function toggleMobileSidebar() {
+       const sidebar = document.getElementById('sidebar-container');
+       const backdrop = document.getElementById('sidebar-backdrop');
+       sidebar.classList.toggle('-translate-x-full');
+       backdrop.classList.toggle('hidden');
+    }
+
+    function applyFilters() {
+       // Update stats
+       let total = rawJiraData.length;
+       let active = rawJiraData.filter(t => t.status !== 'เสร็จสิ้น').length;
+       let done = rawJiraData.filter(t => t.status === 'เสร็จสิ้น').length;
+
+       document.getElementById('stat-total').innerText = total;
+       document.getElementById('stat-active').innerText = active;
+       document.getElementById('stat-done').innerText = done;
+
+       renderRecentTasksTable();
+       renderSpaceEpicProgress();
+       renderCharts();
+    }
+
+    function renderSpaceEpicProgress() {
+       const container = document.getElementById('space-epic-container');
+       container.innerHTML = "";
+
+       let projMap = {};
+       rawJiraData.forEach(item => {
+           if (!projMap[item.project]) {
+               projMap[item.project] = { name: item.project, total: 0, done: 0 };
+           }
+           projMap[item.project].total++;
+           if (item.status === 'เสร็จสิ้น') {
+               projMap[item.project].done++;
+           }
+       });
+
+       const spaces = Object.values(projMap);
+       if (spaces.length === 0) {
+          container.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">ไม่พบข้อมูลความคืบหน้า</div>`;
+          return;
+       }
+
+       spaces.forEach(space => {
+          const total = space.total || 1;
+          const donePct = Math.round((space.done / total) * 100);
+          
+          // Generate simulated epics mapping
+          const spaceTasks = rawJiraData.filter(t => t.project === space.name);
+          let epicMap = {
+             "Epic Core Base Module": 0,
+             "Epic User Interface Blueprint": 0,
+             "Epic Support Handover System": 0
+          };
+          spaceTasks.forEach((t, idx) => {
+             if (idx % 3 === 0) epicMap["Epic Core Base Module"]++;
+             else if (idx % 3 === 1) epicMap["Epic User Interface Blueprint"]++;
+             else epicMap["Epic Support Handover System"]++;
+          });
+
+          let epicHTML = "";
+          Object.keys(epicMap).forEach(epicName => {
+             const count = epicMap[epicName];
+             if (count === 0) return;
+             epicHTML += `
+                <div class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80 rounded-xl pl-8 mt-1">
+                   <div class="flex items-center gap-2 text-xs">
+                      <span class="text-blue-500"><i class="fa-solid fa-bolt"></i></span>
+                      <span class="text-slate-700 dark:text-slate-300 font-semibold">${epicName}</span>
+                   </div>
+                   <span class="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-bold">${count} งาน</span>
+                </div>
+             `;
+          });
+
+          const card = document.createElement('div');
+          card.className = "border border-slate-100 dark:border-slate-800/80 rounded-xl overflow-hidden";
+          card.innerHTML = `
+             <div onclick="toggleAccordion('${space.name}')" class="p-4 bg-slate-50/50 dark:bg-slate-800/20 hover:bg-slate-100/40 dark:hover:bg-slate-800/40 flex items-center justify-between cursor-pointer select-none transition">
+                <div class="flex items-center gap-2">
+                   <i id="arrow-${space.name}" class="fa-solid fa-chevron-right text-slate-400 text-xs transition-transform"></i>
+                   <span class="font-bold text-xs text-slate-800 dark:text-white">สเปซ: ${space.name}</span>
+                </div>
+                <div class="flex items-center gap-4">
+                   <div class="w-32 bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden flex">
+                      <div class="bg-blue-500 h-full" style="width: ${donePct}%"></div>
+                   </div>
+                   <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 w-8 text-right">${donePct}%</span>
+                </div>
+             </div>
+             <div id="content-${space.name}" class="hidden p-3 bg-white dark:bg-darkCard border-t border-slate-100 dark:border-slate-800/60 space-y-1">
+                ${epicHTML}
+             </div>
+          `;
+          container.appendChild(card);
+       });
+    }
+
+    function toggleAccordion(spaceName) {
+       const contentEl = document.getElementById(`content-${spaceName}`);
+       const arrowEl = document.getElementById(`arrow-${spaceName}`);
+       if (contentEl.classList.contains('hidden')) {
+          contentEl.classList.remove('hidden');
+          arrowEl.classList.add('rotate-90');
+       } else {
+          contentEl.classList.add('hidden');
+          arrowEl.classList.remove('rotate-90');
+       }
+    }
+
+    function renderRecentTasksTable() {
+       const container = document.getElementById('recent-tasks-container');
+       container.innerHTML = "";
+       
+       let activeTasks = rawJiraData.filter(t => t.status !== 'เสร็จสิ้น');
+       let sliceData = activeTasks.slice(0, 8);
+       
+       if (sliceData.length === 0) {
+          container.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">ไม่มีคิวงานที่กำลังทำอยู่ในขณะนี้</div>`;
+          return;
+       }
+       
+       let html = `
+         <table class="w-full text-left border-collapse">
+            <thead>
+               <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-darkBorder">
+                  <th class="p-3 pl-5">Key</th>
+                  <th class="p-3">Summary</th>
+                  <th class="p-3">Jira Space</th>
+                  <th class="p-3">Assignee</th>
+                  <th class="p-3 text-center">Actions</th>
+               </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-darkBorder text-sm">
+       `;
+       
+       sliceData.forEach(t => {
+          html += `
+             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="p-3 pl-5 font-bold text-blue-500">${t.key}</td>
+                <td class="p-3 font-semibold text-slate-900 dark:text-white truncate max-w-xs">${t.summary}</td>
+                <td class="p-3 font-bold text-slate-455">${t.project}</td>
+                <td class="p-3 font-medium text-slate-500 dark:text-slate-400">${t.assignee}</td>
+                <td class="p-3 text-center">
+                   <button onclick="openDetailModal('${t.key}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-xs font-bold transition text-slate-600 dark:text-slate-300">
+                     <i class="fa-solid fa-eye"></i> ดูตั๋ว
+                   </button>
+                </td>
+             </tr>
+          `;
+       });
+       
+       html += `</tbody></table>`;
+       container.innerHTML = html;
+    }
+
+    function destroyCharts() {
+       if (chart1Instance) { chart1Instance.destroy(); chart1Instance = null; }
+    }
+
+    function getThemeTextColor() {
+       return document.documentElement.classList.contains('dark') ? '#94a3b8' : '#475569';
+    }
+
+    function renderCharts() {
+       destroyCharts();
+       const txtColor = getThemeTextColor();
+       
+       let active = rawJiraData.filter(t => t.status !== 'เสร็จสิ้น').length;
+       let done = rawJiraData.filter(t => t.status === 'เสร็จสิ้น').length;
+
+       const ctx1 = document.getElementById('chart1').getContext('2d');
+       chart1Instance = new Chart(ctx1, {
+          type: 'doughnut',
+          data: {
+             labels: ['กำลังดำเนินการ', 'เสร็จสิ้น'],
+             datasets: [{
+                data: [active, done],
+                backgroundColor: ['#2ea2f8', '#10b981'],
+                borderWidth: 0
+             }]
+          },
+          options: {
+             responsive: true,
+             maintainAspectRatio: false,
+             plugins: {
+                legend: { position: 'bottom', labels: { color: txtColor } }
+             }
+          }
+       });
+    }
+
+    function openDetailModal(id) {
+       const detailEl = document.getElementById('detailModal-body');
+       detailEl.innerHTML = "";
+
+       const task = rawJiraData.find(j => j.key === id);
+       if (!task) return;
+       
+       let priorityBadge = 'bg-slate-50 text-slate-655';
+       if (task.priority.toLowerCase() === 'high' || task.priority.toLowerCase() === 'highest' || task.priority.toLowerCase() === 'critical') {
+          priorityBadge = 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400';
+       }
+       
+       detailEl.innerHTML = `
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-darkBorder">
+             <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">Jira Ticket</span>
+             <span class="text-xs font-bold text-slate-455">Key: ${task.key}</span>
+          </div>
+          <div class="mt-6 space-y-5">
+             <div>
+                <span class="text-[10px] text-slate-455 font-bold block mb-1">หัวข้อเรื่องงาน (Summary)</span>
+                <div class="text-lg font-bold text-slate-900 dark:text-white">${task.summary}</div>
+             </div>
+             <div class="grid grid-cols-2 gap-4">
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                   <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">โครงการ (Project)</span>
+                   <span class="font-bold text-slate-800 dark:text-white text-xs"><i class="fa-solid fa-folder-open text-blue-500 mr-1.5"></i>${task.project}</span>
+                </div>
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                   <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">สถานะงาน</span>
+                   <span class="font-bold text-slate-855 dark:text-white text-xs"><i class="fa-solid fa-circle-info text-blue-500 mr-1.5"></i>${task.status} (${task.rawStatus})</span>
+                </div>
+             </div>
+             <div class="grid grid-cols-2 gap-4">
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                   <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">ความสำคัญ (Priority)</span>
+                   <span class="font-bold text-xs ${priorityBadge}"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${task.priority}</span>
+                </div>
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                   <span class="text-slate-455 font-bold text-[10px] uppercase block mb-1">ผู้รับผิดชอบ</span>
+                   <span class="font-bold text-slate-800 dark:text-white text-xs"><i class="fa-regular fa-user text-blue-500 mr-1.5"></i>${task.assignee}</span>
+                </div>
+             </div>
+             <div>
+                <span class="text-[10px] text-slate-455 font-bold block mb-1">รายละเอียด</span>
+                <div class="text-sm bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-darkBorder whitespace-pre-wrap leading-relaxed text-slate-700 dark:text-slate-355">${task.desc || 'ไม่มีรายละเอียด'}</div>
+             </div>
+             <div class="mt-4 flex justify-end">
+                <a href="${task.link}" target="_blank" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center gap-1.5">
+                   <i class="fa-brands fa-jira text-xs"></i> เปิดดูใบงานจริงใน Jira
+                </a>
+             </div>
+          </div>
+       `;
+       openModal('detailModal');
+    }
+
+    // Modal helpers
+    function openModal(id) {
+       const modal = document.getElementById(id);
+       modal.classList.remove('hidden');
+       setTimeout(() => {
+          modal.firstElementChild.classList.replace('scale-95', 'scale-100');
+       }, 50);
+    }
+
+    function closeModal(id) {
+       const modal = document.getElementById(id);
+       modal.firstElementChild.classList.replace('scale-100', 'scale-95');
+       setTimeout(() => {
+          modal.classList.add('hidden');
+       }, 150);
+    }
+  </script>
+</body>
+</html>
