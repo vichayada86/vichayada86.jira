@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasky - CEO Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { 
+        extend: { 
+          colors: { 
+            primaryBlue: '#2ea2f8', 
+            darkBg: '#0f172a', 
+            darkCard: '#1e293b', 
+            darkBorder: '#334155' 
+          } 
+        } 
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Kanit', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    
+    /* Animation classes */
+    .fade-in { animation: fadeIn 0.4s ease-in-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .modal-anim { animation: modalBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes modalBounce {
+      from { opacity: 0; transform: scale(0.9) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-darkBg dark:text-slate-100 transition-colors duration-200 min-h-screen flex flex-col">
+
+  <!-- MAIN DASHBOARD LAYOUT -->
+  <div id="main-layout" class="flex min-h-screen">
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebar-backdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-35 hidden md:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar-container" class="w-72 bg-white dark:bg-darkCard border-r border-slate-200 dark:border-darkBorder p-6 fixed inset-y-0 left-0 z-40 transform -translate-x-full md:translate-x-0 md:static md:block flex-shrink-0 transition-transform duration-300">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-blue-500/30">T</div>
+        <div>
+          <h1 class="font-bold text-xl leading-none text-slate-900 dark:text-white">Tasky</h1>
+          <span class="text-sm text-slate-400">Jira & Sheets System</span>
+        </div>
+      </div>
+      
+      <nav class="space-y-2">
+        <button id="menu-dashboard" onclick="setTab('dashboard')" class="w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left">
+          <i class="fa-solid fa-chart-pie text-lg w-6"></i> <span>แดชบอร์ด</span>
+        </button>
+        
+        <button id="menu-tasklist" onclick="setTab('tasklist')" class="w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left">
+          <i class="fa-solid fa-list-check text-lg w-6"></i> <span>รายการงาน</span>
+        </button>
+
+        <div class="pt-6 border-t border-slate-100 dark:border-darkBorder mt-6">
+          <button onclick="logoutToPortal()" class="w-full flex items-center gap-3.5 px-4 py-3 text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl transition text-left font-semibold">
+            <i class="fa-solid fa-right-from-bracket text-base w-6"></i> ออกจากระบบ 
+          </button>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Workspace Pane -->
+    <main class="flex-1 p-6 md:p-8 overflow-y-auto max-w-[1600px] mx-auto w-full flex flex-col">
+      <!-- Workspace Header -->
+      <header class="flex justify-between items-center mb-8 bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm">
+        <div class="flex items-center gap-3">
+          <!-- Mobile Sidebar Toggle -->
+          <button onclick="toggleMobileSidebar()" class="md:hidden p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300">
+            <i class="fa-solid fa-bars text-lg"></i>
+          </button>
+          <div>
+            <h2 id="current-role-title" class="text-xl font-bold text-slate-955 dark:text-white">👑 แดชบอร์ดภาพรวมบริหาร (CEO Dashboard)</h2>
+            <p id="current-role-desc" class="text-sm text-slate-500 dark:text-slate-400">กำลังเชื่อมต่อข้อมูล...</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center">
+          <!-- Multi-select for CEO Spaces -->
+          <div id="ceo-multi-space-container" class="relative mr-4">
+             <button onclick="toggleCEOSpaceDropdown()" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-darkBorder text-slate-800 dark:text-slate-200 rounded-xl text-sm font-semibold transition flex items-center gap-2">
+               📁 <span id="ceo-space-btn-text">สเปซทั้งหมด</span> <i class="fa-solid fa-chevron-down text-xs"></i>
+             </button>
+             <div id="ceo-space-dropdown" class="absolute right-0 mt-2 w-64 bg-white dark:bg-darkCard border border-slate-200 dark:border-darkBorder rounded-2xl shadow-xl p-4 hidden z-20 space-y-2">
+                <div class="flex justify-between items-center text-xs text-slate-400 pb-2 border-b border-slate-100 dark:border-slate-800">
+                  <span>เลือกพื้นที่โครงการ</span>
+                  <button onclick="selectAllCEOSpaces()" class="text-blue-500 font-semibold hover:underline">ทั้งหมด</button>
+                </div>
+                <div id="ceo-space-list" class="max-h-48 overflow-y-auto space-y-1.5 pt-1 text-sm">
+                   <!-- Space items populated dynamically -->
+                </div>
+             </div>
+          </div>
+
+          <!-- Goal Year Select and Edit Target button -->
+          <div class="flex items-center gap-2 mr-4 pr-4 border-r border-slate-200 dark:border-darkBorder">
+             <select id="view-goal-year-select" onchange="changeGoalYearView()" class="px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder text-slate-800 dark:text-slate-200 rounded-xl text-xs font-semibold outline-none">
+               <option value="2026">เป้าหมาย 2026</option>
+               <option value="2027">เป้าหมาย 2027</option>
+               <option value="2028">เป้าหมาย 2028</option>
+             </select>
+             <button onclick="openSetGoalModal()" class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center gap-1">
+               <i class="fa-solid fa-bullseye"></i> ตั้งเป้าหมาย
+             </button>
+          </div>
+
+          <!-- Refresh Button -->
+          <button onclick="loadData()" class="p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300 mr-2" title="ดึงข้อมูลล่าสุด">
+            <i class="fa-solid fa-arrows-rotate text-lg"></i>
+          </button>
+
+          <!-- Dark Mode Toggle -->
+          <button onclick="toggleDarkMode()" class="p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300 mr-4">
+            <i id="theme-icon" class="fa-solid fa-sun text-lg"></i>
+          </button>
+          
+          <!-- Profile Badge -->
+          <div class="flex items-center gap-3">
+            <div id="user-avatar" class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-sm">CE</div>
+            <div class="hidden sm:block text-left">
+              <p id="dashboard-username" class="text-sm font-semibold leading-tight">CEO Admin</p>
+              <p id="user-sub-role" class="text-xs text-slate-400">ผู้บริหารสูงสุด • Management</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ==================== TAB: DASHBOARD ==================== -->
+      <div id="tab-content-dashboard" class="space-y-8 fade-in">
+        <!-- KPI Metrics Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- KPI 1 (Value) -->
+          <div id="kpi-box-1" onclick="handleKPIBoxClick('value')" class="cursor-pointer hover:border-amber-400 hover:shadow-md hover:-translate-y-0.5 transition-all bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+            <p id="kpi-label-1" class="text-sm font-medium text-slate-500 dark:text-slate-400">มูลค่ารวม (THB)</p>
+            <h3 id="stat-value" class="text-3xl font-bold mt-2 text-amber-500">฿0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-amber-50 dark:bg-amber-950/50 text-amber-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition"><i class="fa-solid fa-coins"></i></div>
+          </div>
+          <!-- KPI 2 (Total) -->
+          <div id="kpi-box-2" onclick="handleKPIBoxClick('all-items')" class="cursor-pointer hover:border-blue-400 hover:shadow-md hover:-translate-y-0.5 transition-all bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+            <p id="kpi-label-2" class="text-sm font-medium text-slate-500 dark:text-slate-400">สเปซทั้งหมด (Spaces)</p>
+            <h3 id="stat-total" class="text-3xl font-bold mt-2 text-slate-900 dark:text-white">0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-blue-50 dark:bg-blue-950/50 text-blue-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition"><i id="kpi-icon-2" class="fa-solid fa-folder-open"></i></div>
+          </div>
+          <!-- KPI 3 (Active) -->
+          <div id="kpi-box-3" onclick="handleKPIBoxClick('active')" class="cursor-pointer hover:border-blue-400 hover:shadow-md hover:-translate-y-0.5 transition-all bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+            <p id="kpi-label-3" class="text-sm font-medium text-slate-500 dark:text-slate-400">กำลังดำเนินการ (Active)</p>
+            <h3 id="stat-active" class="text-3xl font-bold mt-2 text-blue-500">0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-blue-50 dark:bg-blue-950/50 text-blue-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition"><i id="kpi-icon-3" class="fa-solid fa-spinner animate-spin"></i></div>
+          </div>
+          <!-- KPI 4 (Done) -->
+          <div id="kpi-box-4" onclick="handleKPIBoxClick('done')" class="cursor-pointer hover:border-emerald-400 hover:shadow-md hover:-translate-y-0.5 transition-all bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+            <div class="flex justify-between items-start">
+               <p id="kpi-label-4" class="text-sm font-medium text-slate-500 dark:text-slate-400">เสร็จสิ้น (100% Done)</p>
+               <span id="kpi-reset-subtext" class="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">รีเซ็ตรายปี</span>
+            </div>
+            <h3 id="stat-done" class="text-3xl font-bold mt-2 text-emerald-500">0</h3>
+            <div class="absolute right-4 bottom-4 w-10 h-10 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition"><i class="fa-solid fa-circle-check"></i></div>
+          </div>
+        </section>
+
+        <!-- Charts Pane -->
+        <section id="charts-section" class="grid grid-cols-1 lg:grid-cols-3 gap-6 transition-all">
+          <div id="chart-container-1" class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm flex flex-col justify-between">
+            <h4 id="chart-title-1" class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4">กราฟเป้าหมายมูลค่างาน</h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chart1"></canvas>
+            </div>
+          </div>
+          <div id="chart-container-2" class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm flex flex-col justify-between">
+            <h4 id="chart-title-2" class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4">แนวโน้มเปรียบเทียบข้อมูล</h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chart2"></canvas>
+            </div>
+          </div>
+          <div id="chart-container-3" class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm flex flex-col justify-between">
+            <h4 id="chart-title-3" class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4"><i class="fa-solid fa-chart-pie mr-2 text-purple-500"></i>สถานะของงานภาพรวม</h4>
+            <div class="h-64 relative flex items-center justify-center">
+              <canvas id="chart3"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- CEO Project Progress Table Panel -->
+        <section id="recent-tasks-panel" class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm overflow-hidden p-6">
+           <h4 class="text-base font-bold mb-4 text-slate-900 dark:text-white">ภาพรวมความคืบหน้าสเปซโครงการ Jira</h4>
+           <div id="ceo-project-table-container">
+               <!-- Populated dynamically -->
+           </div>
+        </section>
+      </div>
+
+      <!-- ==================== TAB: TASK LIST ==================== -->
+      <div id="tab-content-tasklist" class="space-y-6 fade-in hidden">
+        <!-- Container for CEO Accordion Tree -->
+        <div id="ceo-tasklist-accordion-container" class="space-y-4"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== MODALS & POPUPS ==================== -->
+  
+  <!-- MODAL: Set Target Goal Modal -->
+  <div id="setGoalModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-darkCard w-full max-w-sm rounded-2xl p-6 border dark:border-darkBorder shadow-2xl modal-anim scale-95 transition-transform duration-300">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4"><i class="fa-solid fa-bullseye text-amber-500 mr-2"></i> ตั้งเป้าหมายมูลค่าสะสมรายปี</h3>
+        <div class="space-y-3 text-sm text-slate-700 dark:text-slate-350">
+            <div>
+                <label class="block mb-1 font-semibold">ปีงบประมาณเป้าหมาย</label>
+                <input type="text" id="goal-year-input" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 outline-none text-slate-900 dark:text-white" readonly>
+            </div>
+            <div>
+                <label class="block mb-1 font-semibold">มูลค่าเป้าหมาย (THB)</label>
+                <input type="number" id="goal-target-input" placeholder="5000000" class="w-full border dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5 outline-none text-slate-900 dark:text-white">
+            </div>
+        </div>
+        <div class="mt-5 flex gap-2">
+            <button onclick="closeModal('setGoalModal')" class="flex-1 py-2.5 bg-slate-200 dark:bg-slate-700 rounded-xl font-medium text-xs text-slate-700 dark:text-white">ยกเลิก</button>
+            <button onclick="submitCompanyGoal()" class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs shadow-md transition">บันทึกเป้าหมาย</button>
+        </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Space List Popup (CEO Overview KPI Click) -->
+  <div id="ceoSpaceModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-darkCard w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden scale-95 transition-transform duration-300 modal-anim flex flex-col max-h-[80vh] border dark:border-darkBorder">
+      <div class="p-5 border-b border-slate-100 dark:border-darkBorder flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+        <div>
+          <h3 id="ceo-spacelist-title" class="text-lg font-bold text-slate-900 dark:text-white">รายการ Space</h3>
+          <p id="ceo-spacelist-subtitle" class="text-xs text-slate-500">รายละเอียดพื้นที่การทำงานในระบบ Jira</p>
+        </div>
+        <button onclick="closeModal('ceoSpaceModal')" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-0">
+        <table class="w-full text-left border-collapse">
+            <thead class="sticky top-0 bg-white dark:bg-darkCard shadow-sm">
+              <tr class="bg-slate-50 dark:bg-slate-800/80 text-[11px] font-bold text-slate-500 uppercase">
+                <th class="p-3 pl-5">ชื่อ Space / โครงการ</th>
+                <th class="p-3 w-40 text-center">คิวงาน (สำเร็จ / ทั้งหมด)</th>
+              </tr>
+            </thead>
+            <tbody id="popup-space-tbody" class="divide-y divide-slate-100 dark:divide-darkBorder text-sm"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Project Tree Structure Modal (KPI click) -->
+  <div id="ceoTreeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-darkCard w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden scale-95 transition-transform duration-300 modal-anim flex flex-col max-h-[85vh] border dark:border-darkBorder">
+      <div class="p-5 border-b border-slate-100 dark:border-darkBorder flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+        <div>
+          <h3 id="ceo-tree-title" class="text-lg font-bold text-slate-900 dark:text-white">โครงสร้างความคืบหน้าโครงการ</h3>
+          <p id="ceo-tree-subtitle" class="text-xs text-slate-500">Space &gt; Epic &gt; Task</p>
+        </div>
+        <button onclick="closeModal('ceoTreeModal')" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4 md:p-6" id="ceo-tree-container">
+         <!-- Populated dynamically as nested accordion node structures -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIkAhnfLFwEsF2pZNNjwXqrfYQc19Ye5RhsODwTLFDJvWqUwlGwiQDnlHBu4fHsiJ7/exec";
+    
+    let rawJiraData = [];
+    let filteredData = [];
+    let selectedCEOSpaces = [];
+    let companyGoals = [{ year: "2026", target: 5000000 }];
+    let selectedGoalYear = "2026";
+    let currentTab = "dashboard";
+
+    let chart1Instance = null;
+    let chart2Instance = null;
+    let chart3Instance = null;
+
+    // Load credentials on startup
+    const loggedUsername = localStorage.getItem('tasky_username') || "CEO Admin";
+    document.getElementById('dashboard-username').innerText = loggedUsername;
+    
+    // Initialize Theme
+    if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+       document.documentElement.classList.add('dark');
+       document.getElementById('theme-icon').className = "fa-solid fa-moon text-lg";
+    }
+
+    window.onload = async () => {
+       await loadData();
+    };
+
+    function toggleDarkMode() {
+       const isDark = document.documentElement.classList.toggle('dark');
+       localStorage.setItem('theme', isDark ? 'dark' : 'light');
+       document.getElementById('theme-icon').className = isDark ? "fa-solid fa-moon text-lg" : "fa-solid fa-sun text-lg";
+       rebuildCharts();
+    }
+
+    async function loadData() {
+       document.getElementById('current-role-desc').innerText = "กำลังซิงค์คิวงานสะสมจาก Jira API ล่าสุด...";
+       
+       try {
+          const response = await fetch(APPS_SCRIPT_URL);
+          const res = await response.json();
+          
+          if (res && res.status === 'success') {
+             rawJiraData = res.issues.map(item => {
+                return {
+                   key: item.key,
+                   project: item.project,
+                   summary: item.summary,
+                   type: item.type,
+                   status: item.status,
+                   rawStatus: item.rawStatus,
+                   assignee: item.assignee,
+                   priority: item.priority,
+                   created: item.created,
+                   link: item.link,
+                   desc: item.desc || '',
+                   value: item.value || 0
+                };
+             });
+             document.getElementById('current-role-desc').innerText = `อัปเดตข้อมูลล่าสุดสำเร็จ! (เวลา: ${new Date().toLocaleTimeString('th-TH')} น.)`;
+          } else {
+             console.warn("Apps Script Web App returned failure, falling back to mock values.");
+             generateMockJiraData();
+             document.getElementById('current-role-desc').innerText = "แสดงผลด้วยข้อมูลจำลอง (ดึงข้อมูลไม่สำเร็จ)";
+          }
+       } catch (err) {
+          console.error("Failed connecting to Apps Script. Using Mock Fallback:", err);
+          generateMockJiraData();
+          document.getElementById('current-role-desc').innerText = "แสดงผลด้วยข้อมูลจำลอง (เชื่อมต่อเครือข่ายล้มเหลว)";
+       }
+
+       await initGoalsData();
+       initCEOSpaceDropdown();
+       applyRoleFiltering();
+    }
+
+    function generateMockJiraData() {
+       const todayStr = new Date().toISOString().substring(0, 10);
+       rawJiraData = [];
+       const assignees = ['เมย์', 'ตะวัน', 'Unassigned'];
+       const projects = ['Tasky', 'Core Tech', 'Web portal'];
+       for(let i=1; i<=25; i++) {
+           const typeNum = i % 3;
+           const statusNum = i % 4;
+           const prioNum = i % 3;
+           rawJiraData.push({
+               key: `TAS-${i.toString().padStart(3,'0')}`,
+               project: projects[i % projects.length],
+               summary: i%2===0 ? `พัฒนาระบบหลังบ้าน งานที่ ${i}` : `แก้ไขหน้าล็อกอินงานเทคโนโลยี #${i}`,
+               type: typeNum === 0 ? 'Support' : (typeNum === 1 ? 'Install' : 'R&D'),
+               status: statusNum === 0 ? 'เสร็จสิ้น' : 'กำลังดำเนินการ',
+               rawStatus: statusNum === 0 ? 'Done' : 'In Progress',
+               assignee: assignees[i % assignees.length],
+               priority: prioNum === 0 ? 'High' : (prioNum === 1 ? 'Medium' : 'Low'),
+               created: i%2 === 0 ? todayStr : '2026-06-15',
+               link: `https://vichayada.atlassian.net/browse/TAS-${i.toString().padStart(3,'0')}`,
+               desc: 'รายละเอียดจำลองการทำงานของระบบควบคุมคิวตั๋วงาน Jira Cloud...',
+               value: prioNum === 0 ? 100000 : (prioNum === 1 ? 50000 : 25000)
+           });
+       }
+    }
+
+    async function initGoalsData() {
+       try {
+          const response = await fetch(`${APPS_SCRIPT_URL}?type=goals`);
+          const resData = await response.json();
+          if (resData && resData.status === "success" && Array.isArray(resData.goals)) {
+             companyGoals = resData.goals;
+             console.log("Loaded company goals from Google Sheet.");
+          } else {
+             companyGoals = [{ year: "2026", target: 5000000 }];
+          }
+       } catch (err) {
+          console.warn("Failed connecting to goals database, loading local cache:", err);
+          const cached = localStorage.getItem('tasky_company_goals');
+          if (cached) {
+             companyGoals = JSON.parse(cached);
+          } else {
+             companyGoals = [{ year: "2026", target: 5000000 }];
+          }
+       }
+       document.getElementById('view-goal-year-select').value = selectedGoalYear;
+    }
+
+    function changeGoalYearView() {
+       selectedGoalYear = document.getElementById('view-goal-year-select').value;
+       rebuildCharts();
+    }
+
+    function openSetGoalModal() {
+       document.getElementById('goal-year-input').value = selectedGoalYear;
+       const activeGoal = companyGoals.find(g => g.year === selectedGoalYear);
+       document.getElementById('goal-target-input').value = activeGoal ? activeGoal.target : 5000000;
+       openModal('setGoalModal');
+    }
+
+    async function submitCompanyGoal() {
+       const targetVal = parseFloat(document.getElementById('goal-target-input').value);
+       if (isNaN(targetVal) || targetVal < 0) {
+          alert("กรุณากรอกข้อมูลเป้าหมายให้ถูกต้อง!");
+          return;
+       }
+       
+       const existingIdx = companyGoals.findIndex(g => g.year === selectedGoalYear);
+       if (existingIdx > -1) {
+          companyGoals[existingIdx].target = targetVal;
+       } else {
+          companyGoals.push({ year: selectedGoalYear, target: targetVal });
+       }
+       localStorage.setItem('tasky_company_goals', JSON.stringify(companyGoals));
+       
+       closeModal('setGoalModal');
+       rebuildCharts();
+       applyRoleFiltering();
+       
+       try {
+          const payload = { 
+             action: "set_goal",
+             goalData: { year: selectedGoalYear, target: targetVal }
+          };
+          await fetch(APPS_SCRIPT_URL, {
+             method: 'POST',
+             headers: { 'Content-Type': 'text/plain' },
+             body: JSON.stringify(payload)
+          });
+       } catch (err) {
+          console.error("Network error saving goal:", err);
+       }
+    }
+
+    function setTab(tabName) {
+       currentTab = tabName;
+       
+       document.getElementById('tab-content-dashboard').classList.add('hidden');
+       document.getElementById('tab-content-tasklist').classList.add('hidden');
+       document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+       
+       document.getElementById('menu-dashboard').className = tabName === 'dashboard' ? 
+         "w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left" : 
+         "w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left";
+         
+       document.getElementById('menu-tasklist').className = tabName === 'tasklist' ? 
+         "w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left" : 
+         "w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-base font-semibold transition text-left";
+       
+       applyRoleFiltering();
+       closeMobileSidebar();
+    }
+
+    function logoutToPortal() {
+       localStorage.removeItem('tasky_username');
+       localStorage.removeItem('tasky_role');
+       window.location.href = 'index.html';
+    }
+
+    function toggleMobileSidebar() {
+       const sidebar = document.getElementById('sidebar-container');
+       const backdrop = document.getElementById('sidebar-backdrop');
+       sidebar.classList.toggle('-translate-x-full');
+       backdrop.classList.toggle('hidden');
+    }
+
+    function closeMobileSidebar() {
+       const sidebar = document.getElementById('sidebar-container');
+       const backdrop = document.getElementById('sidebar-backdrop');
+       sidebar.classList.add('-translate-x-full');
+       backdrop.classList.add('hidden');
+    }
+
+    function initCEOSpaceDropdown() {
+       const listEl = document.getElementById('ceo-space-list');
+       listEl.innerHTML = "";
+       let uniqueSpaces = [...new Set(rawJiraData.map(i => i.project))];
+       selectedCEOSpaces = [...uniqueSpaces];
+       
+       uniqueSpaces.forEach(space => {
+          const label = document.createElement('label');
+          label.className = "flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 p-1.5 rounded-lg cursor-pointer";
+          label.innerHTML = `
+            <input type="checkbox" class="ceo-space-cb rounded text-blue-500" value="${space}" checked onchange="handleCEOSpaceCheckboxChange()">
+            <span class="text-slate-700 dark:text-slate-355 truncate">${space}</span>
+          `;
+          listEl.appendChild(label);
+       });
+       updateCEOSpaceDropdownButtonText();
+    }
+
+    function toggleCEOSpaceDropdown() {
+       document.getElementById('ceo-space-dropdown').classList.toggle('hidden');
+    }
+
+    function selectAllCEOSpaces() {
+       document.querySelectorAll('.ceo-space-cb').forEach(cb => cb.checked = true);
+       handleCEOSpaceCheckboxChange();
+    }
+
+    function handleCEOSpaceCheckboxChange() {
+       selectedCEOSpaces = [];
+       document.querySelectorAll('.ceo-space-cb').forEach(cb => {
+          if (cb.checked) selectedCEOSpaces.push(cb.value);
+       });
+       updateCEOSpaceDropdownButtonText();
+       applyRoleFiltering();
+    }
+
+    function updateCEOSpaceDropdownButtonText() {
+       const textEl = document.getElementById('ceo-space-btn-text');
+       const totalCbs = document.querySelectorAll('.ceo-space-cb').length;
+       if (selectedCEOSpaces.length === 0) textEl.innerText = "ไม่เลือกสเปซ";
+       else if (selectedCEOSpaces.length === totalCbs) textEl.innerText = "สเปซทั้งหมด";
+       else textEl.innerText = `สเปซ (${selectedCEOSpaces.length})`;
+    }
+
+    window.addEventListener('click', (e) => {
+       const container = document.getElementById('ceo-multi-space-container');
+       if (container && !container.contains(e.target)) {
+          document.getElementById('ceo-space-dropdown').classList.add('hidden');
+       }
+    });
+
+    function applyRoleFiltering() {
+       filteredData = rawJiraData.filter(item => selectedCEOSpaces.includes(item.project));
+
+       let totalCount = 0;
+       let activeCount = 0;
+       let doneCount = 0;
+       let totalValue = 0;
+
+       filteredData.forEach(item => {
+          totalCount++;
+          totalValue += item.value;
+          if (item.status === 'เสร็จสิ้น') doneCount++;
+          else activeCount++;
+       });
+
+       document.getElementById('stat-total').innerText = totalCount;
+       document.getElementById('stat-active').innerText = activeCount;
+       document.getElementById('stat-done').innerText = doneCount;
+       document.getElementById('stat-value').innerText = `฿${totalValue.toLocaleString()}`;
+
+       if (currentTab === 'dashboard') {
+          renderCEOLatestProjectsTable();
+          rebuildCharts();
+       } else {
+          renderCEOTasklistAccordion();
+       }
+    }
+
+    function renderCEOLatestProjectsTable() {
+       const container = document.getElementById('ceo-project-table-container');
+       container.innerHTML = "";
+       
+       let projMap = {};
+       rawJiraData.forEach(item => {
+           if (!projMap[item.project]) {
+               projMap[item.project] = { name: item.project, total: 0, done: 0 };
+           }
+           projMap[item.project].total++;
+           const rawStatus = (item.rawStatus || '').toLowerCase();
+           const status = (item.status || '').trim();
+           if (status === 'เสร็จสิ้น' || rawStatus === 'done' || rawStatus === 'completed') {
+               projMap[item.project].done++;
+           }
+       });
+       
+       const spaces = Object.values(projMap).filter(s => selectedCEOSpaces.includes(s.name));
+       
+       if (spaces.length === 0) {
+          container.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">ไม่เลือกสเปซใด ๆ</div>`;
+          return;
+       }
+       
+       let tableHTML = `
+         <div class="overflow-x-auto">
+           <table class="w-full text-left border-collapse">
+             <thead>
+               <tr class="bg-slate-50 dark:bg-slate-800/50 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-darkBorder">
+                 <th class="p-3 pl-5">ชื่อสเปซ (Jira Space)</th>
+                 <th class="p-3">สถานะ</th>
+                 <th class="p-3">ความคืบหน้าการทำงาน (Progress Bar)</th>
+                 <th class="p-3 text-center">จำนวนงาน</th>
+               </tr>
+             </thead>
+             <tbody class="divide-y divide-slate-100 dark:divide-darkBorder text-sm">
+       `;
+       
+       spaces.forEach(space => {
+          const total = space.total || 1;
+          const donePct = (space.done / total) * 100;
+          const isDone = space.total > 0 && space.done === space.total;
+          const statusText = isDone ? "เสร็จสิ้น" : "กำลังดำเนินการ";
+          const statusClass = isDone ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400" : "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400";
+          const barColorClass = isDone ? "bg-emerald-500" : "bg-blue-500";
+          
+          tableHTML += `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="p-4 pl-5 font-bold text-slate-900 dark:text-white"><i class="fa-solid fa-folder-open text-blue-500 mr-2"></i>${space.name}</td>
+              <td class="p-4"><span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${statusClass}">${statusText}</span></td>
+              <td class="p-4">
+                <div class="bg-slate-100 dark:bg-slate-800 h-2.5 w-64 rounded-full overflow-hidden flex shadow-inner">
+                  <div class="${barColorClass} h-full transition-all duration-550" style="width: ${donePct}%" title="เสร็จสิ้น: ${space.done}/${space.total} งาน"></div>
+                </div>
+              </td>
+              <td class="p-4 text-center font-bold text-slate-500 dark:text-slate-400">${space.done}/${space.total}</td>
+            </tr>
+          `;
+       });
+       
+       tableHTML += `
+             </tbody>
+           </table>
+         </div>
+       `;
+       container.innerHTML = tableHTML;
+    }
+
+    function renderCEOTasklistAccordion() {
+       const container = document.getElementById('ceo-tasklist-accordion-container');
+       container.innerHTML = "";
+       
+       let projMap = {};
+       rawJiraData.forEach(item => {
+           if (!projMap[item.project]) {
+               projMap[item.project] = { name: item.project, total: 0, done: 0 };
+           }
+           projMap[item.project].total++;
+           const rawStatus = (item.rawStatus || '').toLowerCase();
+           const status = (item.status || '').trim();
+           if (status === 'เสร็จสิ้น' || rawStatus === 'done' || rawStatus === 'completed') {
+               projMap[item.project].done++;
+           }
+       });
+       
+       const spaces = Object.values(projMap).filter(s => selectedCEOSpaces.includes(s.name));
+       
+       if (spaces.length === 0) {
+          container.innerHTML = `<div class="p-8 text-center bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder text-slate-400">ไม่พบคิวงานในระบบตามฟิลเตอร์</div>`;
+          return;
+       }
+       
+       spaces.forEach(space => {
+          const total = space.total || 1;
+          const donePct = (space.done / total) * 100;
+          const isDone = space.total > 0 && space.done === space.total;
+          const statusText = isDone ? "เสร็จสิ้น" : "กำลังดำเนินการ";
+          const statusClass = isDone ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400" : "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400";
+          const barColorClass = isDone ? "bg-emerald-500" : "bg-blue-500";
+          
+          const spaceTasks = rawJiraData.filter(t => t.project === space.name);
+          let epicMap = {
+             "Epic Core Base Module": 0,
+             "Epic User Interface Blueprint": 0,
+             "Epic Support Handover System": 0
+          };
+          
+          spaceTasks.forEach((t, idx) => {
+             if (idx % 3 === 0) epicMap["Epic Core Base Module"]++;
+             else if (idx % 3 === 1) epicMap["Epic User Interface Blueprint"]++;
+             else epicMap["Epic Support Handover System"]++;
+          });
+          
+          let epicHTML = "";
+          Object.keys(epicMap).forEach(epicName => {
+             const count = epicMap[epicName];
+             if (count === 0) return;
+             epicHTML += `
+                <div class="flex items-center justify-between p-3.5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60 rounded-xl shadow-sm pl-8">
+                   <div class="flex items-center gap-2.5">
+                      <span class="text-blue-500"><i class="fa-solid fa-bolt"></i></span>
+                      <span class="text-slate-800 dark:text-slate-200 text-sm font-semibold">${epicName}</span>
+                   </div>
+                   <span class="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full font-bold">${count} งาน</span>
+                </div>
+             `;
+          });
+
+          const spaceDiv = document.createElement('div');
+          spaceDiv.className = "bg-white dark:bg-darkCard border border-slate-200 dark:border-darkBorder rounded-2xl overflow-hidden shadow-sm";
+          
+          spaceDiv.innerHTML = `
+            <div onclick="toggleCEOSpaceAccordion('${space.name}')" class="p-5 flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-all select-none gap-4">
+               <div class="flex items-center gap-3">
+                  <i id="space-arrow-${space.name}" class="fa-solid fa-chevron-right text-slate-400 transition-transform"></i>
+                  <span class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg"><i class="fa-solid fa-folder-open"></i></span>
+                  <div>
+                     <h3 class="font-bold text-base text-slate-900 dark:text-white">สเปซ: ${space.name}</h3>
+                     <span class="text-xs text-slate-400">โครงการระบบ Jira Cloud</span>
+                  </div>
+               </div>
+               
+               <div class="flex items-center gap-6 self-end sm:self-auto">
+                  <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${statusClass}">${statusText}</span>
+                  <div class="flex items-center gap-3 w-48 sm:w-56">
+                    <div class="flex-1 bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden flex">
+                      <div class="${barColorClass} h-full transition-all duration-550" style="width: ${donePct}%"></div>
+                    </div>
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 w-10 text-right">${space.done}/${space.total}</span>
+                  </div>
+               </div>
+            </div>
+            
+            <div id="space-content-${space.name}" class="hidden p-5 pt-0 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/10 space-y-2">
+               ${epicHTML}
+            </div>
+          `;
+          container.appendChild(spaceDiv);
+       });
+    }
+
+    function toggleCEOSpaceAccordion(spaceName) {
+       const contentEl = document.getElementById(`space-content-${spaceName}`);
+       const arrowEl = document.getElementById(`space-arrow-${spaceName}`);
+       if (contentEl.classList.contains('hidden')) {
+          contentEl.classList.remove('hidden');
+          arrowEl.classList.add('rotate-90');
+       } else {
+          contentEl.classList.add('hidden');
+          arrowEl.classList.remove('rotate-90');
+       }
+    }
+
+    function handleKPIBoxClick(type) {
+       const tbody = document.getElementById('popup-space-tbody');
+       tbody.innerHTML = '';
+       
+       let projMap = {};
+       rawJiraData.forEach(i => {
+           if(!projMap[i.project]) projMap[i.project] = { name: i.project, total: 0, done: 0 };
+           projMap[i.project].total++;
+           if(i.status === 'เสร็จสิ้น') projMap[i.project].done++;
+       });
+       let spaces = Object.values(projMap);
+       
+       if (type === 'active') spaces = spaces.filter(s => s.done < s.total);
+       else if (type === 'done') spaces = spaces.filter(s => s.done === s.total);
+       
+       if (spaces.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="2" class="p-8 text-center text-slate-400">ไม่พบคิวงานในเงื่อนไข</td></tr>`;
+          openModal('ceoSpaceModal');
+          return;
+       }
+       
+       spaces.forEach(sp => {
+           const row = document.createElement('tr');
+           row.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer group transition-colors';
+           row.onclick = () => { closeModal('ceoSpaceModal'); setTimeout(() => openCEOTreeModal(sp.name, type), 200); };
+           row.innerHTML = `
+              <td class="p-4 pl-5 font-bold text-slate-800 dark:text-white group-hover:text-blue-500 transition-colors"><i class="fa-solid fa-folder-open text-blue-400 mr-2"></i>${sp.name}</td>
+              <td class="p-4 text-center font-semibold text-slate-600 dark:text-slate-355">${sp.done} / ${sp.total}</td>
+           `;
+           tbody.appendChild(row);
+       });
+       document.getElementById('ceo-spacelist-title').innerText = type === 'value' ? "สเปซโครงการและมูลค่าเป้าหมาย" : (type === 'active' ? "รายการสเปซที่ยังไม่เสร็จสิ้น" : "สเปซโครงการเสร็จสิ้น (สำเร็จ)");
+       openModal('ceoSpaceModal');
+    }
+
+    function openCEOTreeModal(targetSpaceName, filterType) {
+       const container = document.getElementById('ceo-tree-container');
+       container.innerHTML = "";
+       
+       let spaceFiltered = [...rawJiraData];
+       if (targetSpaceName !== 'all') {
+          spaceFiltered = spaceFiltered.filter(i => i.project === targetSpaceName);
+       }
+       
+       let spaceMap = {};
+       spaceFiltered.forEach(task => {
+          if (!spaceMap[task.project]) spaceMap[task.project] = [];
+          spaceMap[task.project].push(task);
+       });
+       
+       const spaceKeys = Object.keys(spaceMap);
+       if (spaceKeys.length === 0) {
+          container.innerHTML = `<p class="text-center text-slate-400 text-sm">ไม่พบคิวงานในแผนภูมิต้นไม้</p>`;
+          openModal('ceoTreeModal');
+          return;
+       }
+       
+       spaceKeys.forEach((spaceName, sIdx) => {
+          const spaceTasks = spaceMap[spaceName];
+          const spaceDiv = document.createElement('details');
+          spaceDiv.className = "mb-4 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-darkBorder rounded-2xl overflow-hidden shadow-sm group";
+          spaceDiv.open = sIdx === 0;
+          
+          let epicMap = {
+             "Epic Core Base Module": [],
+             "Epic User Interface Blueprint": [],
+             "Epic Support Handover System": []
+          };
+          
+          spaceTasks.forEach((t, tIdx) => {
+             if (tIdx % 3 === 0) epicMap["Epic Core Base Module"].push(t);
+             else if (tIdx % 3 === 1) epicMap["Epic User Interface Blueprint"].push(t);
+             else epicMap["Epic Support Handover System"].push(t);
+          });
+          
+          let epicHTML = "";
+          Object.keys(epicMap).forEach(epicName => {
+             const epicTasks = epicMap[epicName].filter(t => {
+                if (filterType === 'active') return t.status !== 'เสร็จสิ้น';
+                if (filterType === 'done') return t.status === 'เสร็จสิ้น';
+                return true;
+             });
+             
+             if (epicTasks.length === 0) return;
+             
+             let taskHTML = "";
+             epicTasks.forEach(task => {
+                const badgeClass = task.status === 'เสร็จสิ้น' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400';
+                taskHTML += `
+                   <div class="flex items-center justify-between p-3.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition text-xs">
+                      <div class="flex items-center gap-2">
+                         <span class="font-bold text-blue-500">${task.key}</span>
+                         <span class="text-slate-600 dark:text-slate-350 font-medium truncate max-w-[200px] md:max-w-md">${task.summary}</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                         <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-450 font-semibold">${task.assignee}</span>
+                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${badgeClass}">${task.status}</span>
+                      </div>
+                   </div>
+                `;
+             });
+             
+             epicHTML += `
+                <div class="mt-2 pl-4 border-l-2 border-blue-500/30">
+                   <div class="p-2 bg-blue-50/50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-bold flex items-center justify-between">
+                      <span>⚡ ${epicName}</span>
+                      <span class="text-[10px] bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 rounded-full">${epicTasks.length} งาน</span>
+                   </div>
+                   <div class="divide-y divide-slate-100 dark:divide-slate-800 space-y-0.5 mt-1">
+                      ${taskHTML}
+                   </div>
+                </div>
+             `;
+          });
+
+          spaceDiv.innerHTML = `
+             <summary class="p-4 font-bold flex items-center justify-between cursor-pointer list-none select-none text-slate-800 dark:text-white">
+                <div class="flex items-center gap-2">
+                   <i class="fa-solid fa-folder text-yellow-500"></i>
+                   <span>สเปซ: ${spaceName}</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                   <span class="px-2 py-1 bg-slate-100 dark:bg-slate-850 rounded-lg">${spaceTasks.length} งาน</span>
+                   <i class="fa-solid fa-chevron-down group-open:rotate-180 transition-transform text-slate-450"></i>
+                </div>
+             </summary>
+             <div class="p-4 pt-0 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                ${epicHTML || '<p class="text-xs text-slate-400 text-center py-2">ไม่มีงานในสเปซโครงการ</p>'}
+             </div>
+          `;
+          container.appendChild(spaceDiv);
+       });
+       
+       document.getElementById('ceo-tree-title').innerText = filterType === 'active' ? "โครงสร้างคิวงานที่กำลังทำ (Active Tasks Tree)" : (filterType === 'done' ? "โครงสร้างความสำเร็จโครงการ (Completed Tree)" : "โครงสร้างโครงการทั้งหมด (Project Tree)");
+       openModal('ceoTreeModal');
+    }
+
+    function rebuildCharts() {
+       renderCEOCharts();
+    }
+
+    function destroyCharts() {
+       if(chart1Instance) { chart1Instance.destroy(); chart1Instance = null; }
+       if(chart2Instance) { chart2Instance.destroy(); chart2Instance = null; }
+       if(chart3Instance) { chart3Instance.destroy(); chart3Instance = null; }
+    }
+
+    function getThemeTextColor() {
+       return document.documentElement.classList.contains('dark') ? '#94a3b8' : '#475569';
+    }
+
+    function getGoalTarget() {
+       const activeGoal = companyGoals.find(g => g.year === selectedGoalYear);
+       return activeGoal ? activeGoal.target : 5000000;
+    }
+
+    function renderCEOCharts() {
+       destroyCharts();
+       
+       const txtColor = getThemeTextColor();
+       document.getElementById('chart-title-1').innerText = `เป้าหมายมูลค่างานสะสมขององค์กร (Target: ${getGoalTarget().toLocaleString()} THB)`;
+       document.getElementById('chart-title-2').innerText = "แนวโน้มยอดสะสมและมูลค่าโครงการ";
+       document.getElementById('chart-title-3').innerText = "สัดส่วนสถานะการปิดเคสคิวงานภาพรวม";
+       
+       let totalValue = 0;
+       filteredData.forEach(item => totalValue += item.value);
+
+       // Chart 1: Gauge (Semi-donut) for target limit
+       const ctx1 = document.getElementById('chart1').getContext('2d');
+       const targetVal = getGoalTarget();
+       chart1Instance = new Chart(ctx1, {
+          type: 'doughnut',
+          data: {
+             labels: ['มูลค่าสะสม', 'เป้าหมายที่เหลือ'],
+             datasets: [{
+                data: [totalValue, Math.max(targetVal - totalValue, 0)],
+                backgroundColor: ['#f59e0b', '#cbd5e1'],
+                borderWidth: 0
+             }]
+          },
+          options: {
+             rotation: -90,
+             circumference: 180,
+             cutout: '80%',
+             plugins: {
+                legend: { display: false }
+             }
+          }
+       });
+
+       // Chart 2: Cumulative trend line chart
+       const ctx2 = document.getElementById('chart2').getContext('2d');
+       chart2Instance = new Chart(ctx2, {
+          type: 'line',
+          data: {
+             labels: ['ม.ค.', 'มี.ค.', 'พ.ค.', 'ก.ค.', 'ก.ย.', 'พ.ย.'],
+             datasets: [{
+                label: 'ยอดสะสมโครงการ',
+                data: [500000, 1200000, 1800000, 2400000, 3100000, totalValue],
+                borderColor: '#2ea2f8',
+                backgroundColor: 'rgba(46, 162, 248, 0.1)',
+                fill: true,
+                tension: 0.4
+             }]
+          },
+          options: {
+             responsive: true,
+             maintainAspectRatio: false,
+             scales: {
+                x: { ticks: { color: txtColor } },
+                y: { ticks: { color: txtColor } }
+             }
+          }
+       });
+
+       // Chart 3: Status donut for CEO
+       const ctx3 = document.getElementById('chart3').getContext('2d');
+       let tOpen = filteredData.filter(t => t.status === 'กำลังดำเนินการ').length;
+       let tDone = filteredData.filter(t => t.status === 'เสร็จสิ้น').length;
+       
+       chart3Instance = new Chart(ctx3, {
+          type: 'pie',
+          data: {
+             labels: ['กำลังดำเนินการ', 'เสร็จสิ้น'],
+             datasets: [{
+                data: [tOpen, tDone],
+                backgroundColor: ['#2ea2f8', '#10b981'],
+                borderWidth: 0
+             }]
+          },
+          options: {
+             responsive: true,
+             maintainAspectRatio: false,
+             plugins: {
+                legend: { position: 'bottom', labels: { color: txtColor } }
+             }
+          }
+       });
+    }
+
+    function openModal(id) {
+       const modal = document.getElementById(id);
+       modal.classList.remove('hidden');
+       setTimeout(() => {
+          modal.firstElementChild.classList.replace('scale-95', 'scale-100');
+       }, 50);
+    }
+
+    function closeModal(id) {
+       const modal = document.getElementById(id);
+       modal.firstElementChild.classList.replace('scale-100', 'scale-95');
+       setTimeout(() => {
+          modal.classList.add('hidden');
+       }, 150);
+    }
+  </script>
+</body>
+</html>
