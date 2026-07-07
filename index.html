@@ -343,6 +343,9 @@
 
       <!-- ==================== TAB: TASK LIST ==================== -->
       <div id="tab-content-tasklist" class="space-y-6 fade-in hidden">
+        <!-- Container for CEO Accordion Tree -->
+        <div id="ceo-tasklist-accordion-container" class="hidden space-y-4"></div>
+        
         <section id="table-section" class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm overflow-hidden">
           <div id="filter-section" class="p-4 border-b border-slate-200 dark:border-darkBorder flex flex-col md:flex-row gap-3 items-center justify-between">
             <div class="flex gap-2 w-full md:w-auto">
@@ -1258,12 +1261,21 @@
       if (currentRole === 'Dev') {
          renderKanbanBoard(filteredData);
       } else {
-         renderStandardTable();
+         if (currentRole === 'CEO' && currentTab === 'tasklist') {
+            renderCEOTasklistAccordion();
+         } else {
+            // Restore standard views
+            const ceoAccordion = document.getElementById('ceo-tasklist-accordion-container');
+            if (ceoAccordion) ceoAccordion.classList.add('hidden');
+            document.getElementById('table-section').classList.remove('hidden');
+            renderStandardTable();
+         }
          renderStandardCharts();
          renderRecentTasks(filteredData);
       }
     }
 
+    // --- Render standard Jira Table ---
     // --- Render standard Jira Table ---
     function renderStandardTable() {
       document.getElementById('table-header-row').innerHTML = `
@@ -1349,7 +1361,7 @@
          let prioColor = '';
          if (item.priority === 'High') prioColor = 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400';
          else if (item.priority === 'Medium') prioColor = 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400';
-         else prioColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-350';
+         else prioColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-355';
 
          row.innerHTML = `
              <td class="p-3 pl-5 font-bold text-slate-900 dark:text-white truncate max-w-xs" title="${item.name}">${item.name}</td>
@@ -1372,6 +1384,19 @@
 
     // --- Render Recent Tasks (Bottom panel quick queue) ---
     function renderRecentTasks(dataList) {
+       const panelTitle = document.getElementById('recent-tasks-panel-title') || document.querySelector('#recent-tasks-panel h4');
+       const tableContainer = document.getElementById('recent-tasks-table-container');
+       const ceoContainer = document.getElementById('ceo-project-table-container');
+       
+       if (currentRole === 'CEO') {
+          renderCEOLatestProjectsTable();
+          return;
+       }
+       
+       if (panelTitle) panelTitle.innerText = "ตารางสรุปคิวงานล่าสุด";
+       if (tableContainer) tableContainer.classList.remove('hidden');
+       if (ceoContainer) ceoContainer.classList.add('hidden');
+       
        const tbody = document.getElementById('recent-tasks-tbody');
        tbody.innerHTML = "";
        
@@ -1407,6 +1432,206 @@
           tbody.appendChild(row);
        });
     }
+
+    // --- CEO Dashboard: Render Space/Projects progress bar table ---
+    function renderCEOLatestProjectsTable() {
+       const tableContainer = document.getElementById('recent-tasks-table-container');
+       if (tableContainer) tableContainer.classList.add('hidden');
+       
+       let ceoContainer = document.getElementById('ceo-project-table-container');
+       if (!ceoContainer) {
+          const panel = document.getElementById('recent-tasks-panel');
+          ceoContainer = document.createElement('div');
+          ceoContainer.id = 'ceo-project-table-container';
+          panel.appendChild(ceoContainer);
+       }
+       ceoContainer.classList.remove('hidden');
+       ceoContainer.innerHTML = "";
+       
+       let projMap = {};
+       rawJiraData.forEach(item => {
+           if (!projMap[item.project]) {
+               projMap[item.project] = { name: item.project, total: 0, done: 0, inProgress: 0, toDo: 0 };
+           }
+           projMap[item.project].total++;
+           const rawStatus = (item.rawStatus || '').toLowerCase();
+           const status = (item.status || '').trim();
+           if (status === 'เสร็จสิ้น' || rawStatus === 'done' || rawStatus === 'completed') {
+               projMap[item.project].done++;
+           } else if (rawStatus === 'in progress' || rawStatus === 'in review' || rawStatus === 'testing' || status === 'กำลังดำเนินการ') {
+               projMap[item.project].inProgress++;
+           } else {
+               projMap[item.project].toDo++;
+           }
+       });
+       
+       const spaces = Object.values(projMap).filter(s => selectedCEOSpaces.includes(s.name));
+       
+       if (spaces.length === 0) {
+          ceoContainer.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs">ไม่เลือกสเปซใด ๆ</div>`;
+          return;
+       }
+       
+       let tableHTML = `
+         <div class="overflow-x-auto">
+           <table class="w-full text-left border-collapse">
+             <thead>
+               <tr class="bg-slate-50 dark:bg-slate-800/50 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-darkBorder">
+                 <th class="p-3 pl-5">ชื่อสเปซ (Jira Space)</th>
+                 <th class="p-3">สถานะ</th>
+                 <th class="p-3">ความคืบหน้าการทำงาน (Progress Bar)</th>
+                 <th class="p-3 text-center">จำนวนงาน</th>
+               </tr>
+             </thead>
+             <tbody class="divide-y divide-slate-100 dark:divide-darkBorder text-sm">
+       `;
+       
+       spaces.forEach(space => {
+          const total = space.total || 1;
+          const donePct = (space.done / total) * 100;
+          
+          const isDone = space.total > 0 && space.done === space.total;
+          const statusText = isDone ? "เสร็จสิ้น" : "กำลังดำเนินการ";
+          const statusClass = isDone ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400" : "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400";
+          const barColorClass = isDone ? "bg-emerald-500" : "bg-blue-500";
+          
+          tableHTML += `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="p-4 pl-5 font-bold text-slate-900 dark:text-white"><i class="fa-solid fa-folder-open text-blue-500 mr-2"></i>${space.name}</td>
+              <td class="p-4"><span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${statusClass}">${statusText}</span></td>
+              <td class="p-4">
+                <div class="bg-slate-100 dark:bg-slate-800 h-2.5 w-64 rounded-full overflow-hidden flex shadow-inner">
+                  <div class="${barColorClass} h-full transition-all duration-550" style="width: ${donePct}%" title="เสร็จสิ้น: ${space.done}/${space.total} งาน"></div>
+                </div>
+              </td>
+              <td class="p-4 text-center font-bold text-slate-500 dark:text-slate-400">${space.done}/${space.total}</td>
+            </tr>
+          `;
+       });
+       
+       tableHTML += `
+             </tbody>
+           </table>
+         </div>
+       `;
+       ceoContainer.innerHTML = tableHTML;
+    }
+
+    // --- CEO Tasklist: Render Space > Epic list accordion ---
+    function renderCEOTasklistAccordion() {
+       const container = document.getElementById('ceo-tasklist-accordion-container');
+       container.classList.remove('hidden');
+       document.getElementById('table-section').classList.add('hidden');
+       container.innerHTML = "";
+       
+       let projMap = {};
+       rawJiraData.forEach(item => {
+           if (!projMap[item.project]) {
+               projMap[item.project] = { name: item.project, total: 0, done: 0, inProgress: 0, toDo: 0 };
+           }
+           projMap[item.project].total++;
+           const rawStatus = (item.rawStatus || '').toLowerCase();
+           const status = (item.status || '').trim();
+           if (status === 'เสร็จสิ้น' || rawStatus === 'done' || rawStatus === 'completed') {
+               projMap[item.project].done++;
+           } else if (rawStatus === 'in progress' || rawStatus === 'in review' || rawStatus === 'testing' || status === 'กำลังดำเนินการ') {
+               projMap[item.project].inProgress++;
+           } else {
+               projMap[item.project].toDo++;
+           }
+       });
+       
+       const spaces = Object.values(projMap).filter(s => selectedCEOSpaces.includes(s.name));
+       
+       if (spaces.length === 0) {
+          container.innerHTML = `<div class="p-8 text-center bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder text-slate-400">ไม่พบคิวงานในระบบตามฟิลเตอร์</div>`;
+          return;
+       }
+       
+       spaces.forEach(space => {
+          const total = space.total || 1;
+          const donePct = (space.done / total) * 100;
+          
+          const isDone = space.total > 0 && space.done === space.total;
+          const statusText = isDone ? "เสร็จสิ้น" : "กำลังดำเนินการ";
+          const statusClass = isDone ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400" : "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400";
+          const barColorClass = isDone ? "bg-emerald-500" : "bg-blue-500";
+          
+          // Simulated Epics mapping for display
+          const spaceTasks = rawJiraData.filter(t => t.project === space.name);
+          let epicMap = {
+             "Epic Core Base Module": 0,
+             "Epic User Interface Blueprint": 0,
+             "Epic Support Handover System": 0
+          };
+          
+          spaceTasks.forEach((t, idx) => {
+             if (idx % 3 === 0) epicMap["Epic Core Base Module"]++;
+             else if (idx % 3 === 1) epicMap["Epic User Interface Blueprint"]++;
+             else epicMap["Epic Support Handover System"]++;
+          });
+          
+          let epicHTML = "";
+          Object.keys(epicMap).forEach(epicName => {
+             const count = epicMap[epicName];
+             if (count === 0) return;
+             epicHTML += `
+                <div class="flex items-center justify-between p-3.5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60 rounded-xl shadow-sm pl-8">
+                   <div class="flex items-center gap-2.5">
+                      <span class="text-blue-500"><i class="fa-solid fa-bolt"></i></span>
+                      <span class="text-slate-800 dark:text-slate-200 text-sm font-semibold">${epicName}</span>
+                   </div>
+                   <span class="text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full font-bold">${count} งาน</span>
+                </div>
+             `;
+          });
+
+          const spaceDiv = document.createElement('div');
+          spaceDiv.className = "bg-white dark:bg-darkCard border border-slate-200 dark:border-darkBorder rounded-2xl overflow-hidden shadow-sm";
+          
+          spaceDiv.innerHTML = `
+            <div onclick="toggleCEOSpaceAccordion('${space.name}')" class="p-5 flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-all select-none gap-4">
+               <div class="flex items-center gap-3">
+                  <i id="space-arrow-${space.name}" class="fa-solid fa-chevron-right text-slate-400 transition-transform"></i>
+                  <span class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg"><i class="fa-solid fa-folder-open"></i></span>
+                  <div>
+                     <h3 class="font-bold text-base text-slate-900 dark:text-white">สเปซ: ${space.name}</h3>
+                     <span class="text-xs text-slate-400">โครงการระบบ Jira Cloud</span>
+                  </div>
+               </div>
+               
+               <div class="flex items-center gap-6 self-end sm:self-auto">
+                  <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${statusClass}">${statusText}</span>
+                  
+                  <div class="flex items-center gap-3 w-48 sm:w-56">
+                    <div class="flex-1 bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden flex">
+                      <div class="${barColorClass} h-full transition-all duration-550" style="width: ${donePct}%"></div>
+                    </div>
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 w-10 text-right">${space.done}/${space.total}</span>
+                  </div>
+               </div>
+            </div>
+            
+            <div id="space-content-${space.name}" class="hidden p-5 pt-0 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/10 space-y-2">
+               ${epicHTML}
+            </div>
+          `;
+          container.appendChild(spaceDiv);
+       });
+    }
+
+    // Toggle logic for Space
+    window.toggleCEOSpaceAccordion = function(spaceName) {
+       const contentEl = document.getElementById(`space-content-${spaceName}`);
+       const arrowEl = document.getElementById(`space-arrow-${spaceName}`);
+       if (contentEl.classList.contains('hidden')) {
+          contentEl.classList.remove('hidden');
+          arrowEl.classList.add('rotate-90');
+       } else {
+          contentEl.classList.add('hidden');
+          arrowEl.classList.remove('rotate-90');
+       }
+    };
 
     // --- Render Top 5 priorities for Developer view ---
     function renderDevPriorityList(list) {
