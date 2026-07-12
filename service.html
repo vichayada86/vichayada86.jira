@@ -66,14 +66,8 @@
       </div>
       
       <nav class="space-y-2">
-        <button id="menu-dashboard" onclick="switchTab('dashboard')" class="w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left">
+        <button id="menu-dashboard" class="w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left">
           <i class="fa-solid fa-chart-pie text-lg w-6"></i> <span>แดชบอร์ด</span>
-        </button>
-        <button id="menu-noteform" onclick="switchTab('noteform')" class="w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl font-semibold text-base transition text-left">
-          <i class="fa-solid fa-pen-to-square text-lg w-6"></i> <span>บันทึกงาน</span>
-        </button>
-        <button id="menu-notelogs" onclick="switchTab('notelogs')" class="w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl font-semibold text-base transition text-left">
-          <i class="fa-solid fa-clock-rotate-left text-lg w-6"></i> <span>รายการบันทึก</span>
         </button>
 
         <div class="pt-6 border-t border-slate-100 dark:border-darkBorder mt-6">
@@ -99,12 +93,6 @@
         </div>
         
         <div class="flex items-center gap-2">
-          <!-- ปุ่มแจ้งปัญหาด่วน SOS Button -->
-          <button onclick="openModal('serviceIssueModal')" class="flex items-center gap-1.5 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs transition shadow-md shadow-rose-500/20 group animate-pulse" title="แจ้งปัญหาหน้างานด่วน">
-            <i class="fa-solid fa-bell text-sm group-hover:animate-bounce"></i>
-            <span class="hidden sm:inline">แจ้งปัญหาด่วน</span>
-          </button>
-
           <!-- Refresh Button -->
           <button onclick="loadData()" class="p-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition text-slate-600 dark:text-slate-300" title="ดึงข้อมูลล่าสุด">
             <i class="fa-solid fa-arrows-rotate text-lg"></i>
@@ -129,74 +117,25 @@
       <!-- ==================== TAB: DASHBOARD ==================== -->
       <div id="tab-content-dashboard" class="space-y-8 fade-in">
         <!-- KPI Metrics Grid -->
-        <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- KPI 2 (Total) -->
-          <div onclick="handleKPIBoxClick('all-items')" class="cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-all bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+          <div class="bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
             <p class="text-sm font-medium text-slate-500 dark:text-slate-400">งานทั้งหมดในระบบ</p>
             <h3 id="stat-total" class="text-3xl font-bold mt-2 text-slate-900 dark:text-white">0</h3>
             <div class="absolute right-4 bottom-4 w-10 h-10 bg-blue-50 dark:bg-blue-950/50 text-blue-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-layer-group"></i></div>
           </div>
           <!-- KPI 3 (Active) -->
-          <div onclick="handleKPIBoxClick('active')" class="cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-all bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+          <div class="bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
             <p class="text-sm font-medium text-slate-500 dark:text-slate-400">กำลังดำเนินการ</p>
             <h3 id="stat-active" class="text-3xl font-bold mt-2 text-blue-500">0</h3>
             <div class="absolute right-4 bottom-4 w-10 h-10 bg-blue-50 dark:bg-blue-950/50 text-blue-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-spinner animate-spin"></i></div>
           </div>
           <!-- KPI 4 (Done) -->
-          <div onclick="handleKPIBoxClick('done')" class="cursor-pointer hover:border-emerald-400 dark:hover:border-emerald-500 transition-all bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
+          <div class="bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
             <p class="text-sm font-medium text-slate-500 dark:text-slate-400">สำเร็จส่งมอบ</p>
             <h3 id="stat-done" class="text-3xl font-bold mt-2 text-emerald-500">0</h3>
             <div class="absolute right-4 bottom-4 w-10 h-10 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-circle-check"></i></div>
           </div>
-          <!-- KPI: งานเร่งด่วน -->
-          <div onclick="openModal('ceoTreeModal')" class="cursor-pointer hover:border-orange-400 hover:shadow-md hover:-translate-y-0.5 transition-all bg-white dark:bg-darkCard p-5 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm relative overflow-hidden group">
-            <p class="text-sm font-medium text-slate-500 dark:text-slate-400">งานเร่งด่วนแทรก</p>
-            <h3 id="stat-urgent" class="text-3xl font-bold mt-2 text-orange-500">0</h3>
-            <div class="absolute right-4 bottom-4 w-10 h-10 bg-orange-50 dark:bg-orange-950/40 text-orange-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition"><i class="fa-solid fa-triangle-exclamation animate-bounce"></i></div>
-          </div>
-        </section>
-
-        <!-- Top Priority List Box -->
-        <section id="dev-priority-section" class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm">
-           <h4 class="text-base font-bold mb-4 text-slate-900 dark:text-white flex items-center gap-2">
-              <i class="fa-solid fa-circle-exclamation text-rose-500 animate-pulse"></i> งานเร่งด่วน 5 อันดับแรก (Top 5 Urgent Tasks)
-           </h4>
-           <div id="dev-priority-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <!-- Inner boxes dynamically populated -->
-           </div>
-        </section>
-
-        <!-- Action Panel for Service -->
-        <section class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm flex items-center justify-between">
-           <div>
-              <h4 class="text-lg font-bold text-slate-900 dark:text-white">🚨 พบปัญหาหน้างาน?</h4>
-              <p class="text-sm text-slate-500 dark:text-slate-400">แจ้งปัญหาหน้างานเพื่อส่งต่อให้เจ้าหน้าที่ IT Support ช่วยตรวจสอบและแก้ไขอย่างเร่งด่วน</p>
-           </div>
-           <button onclick="openModal('serviceIssueModal')" class="px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-sm transition shadow-lg shadow-rose-500/20 flex items-center gap-2">
-              <i class="fa-solid fa-circle-exclamation text-base"></i> แจ้งปัญหาหน้างาน
-           </button>
-        </section>
-
-        <!-- Active Service Issues Table -->
-        <section class="bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm overflow-hidden p-6">
-           <h4 class="text-base font-bold mb-4 text-slate-900 dark:text-white">ประวัติปัญหาหน้างาน / งานแทรกบริการ</h4>
-           <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
-                 <thead>
-                    <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-darkBorder">
-                       <th class="p-3 pl-5">ID</th>
-                       <th class="p-3">ชื่องาน</th>
-                       <th class="p-3">สถานที่</th>
-                       <th class="p-3">ผู้รับผิดชอบ (Dev)</th>
-                       <th class="p-3">สถานะระบบ</th>
-                       <th class="p-3 text-center">จัดการ</th>
-                    </tr>
-                 </thead>
-                 <tbody id="service-issues-tbody" class="divide-y divide-slate-100 dark:divide-darkBorder text-xs">
-                    <!-- Populated dynamically -->
-                 </tbody>
-              </table>
-           </div>
         </section>
 
         <!-- Charts Pane & Space Progress Accordion -->
@@ -225,141 +164,11 @@
            </div>
         </section>
       </div>
-
-      <!-- ==================== TAB: NOTE FORM ==================== -->
-      <div id="tab-content-noteform" class="space-y-6 fade-in hidden">
-         <section class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm max-w-2xl mx-auto">
-            <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-2"><i class="fa-solid fa-pen-to-square text-blue-500 mr-2"></i>บันทึกข้อมูลการบริการ (Service Job Note)</h4>
-            <p class="text-xs text-slate-400 mb-6">สร้างประวัติโน้ตงานประจำวันสำหรับสถานที่และปัญหาระบบต่างๆ</p>
-            
-            <form onsubmit="submitServiceNote(event)" class="space-y-4">
-               <div>
-                  <label class="text-xs font-bold text-slate-400 block mb-1">ชื่อของงาน <span class="text-rose-500">*</span></label>
-                  <input type="text" id="note-jobname" required placeholder="เช่น ปรับปรุงเซิร์ฟเวอร์ระบบหน้าบ้าน" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs focus:outline-none focus:border-blue-500 text-slate-900 dark:text-white">
-               </div>
-               <div>
-                  <label class="text-xs font-bold text-slate-400 block mb-1">สถานที่ทำงาน <span class="text-rose-500">*</span></label>
-                  <input type="text" id="note-location" required placeholder="เช่น อาคาร A ชั้น 4 / สาขาพารากอน" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs focus:outline-none focus:border-blue-500 text-slate-900 dark:text-white">
-               </div>
-               <div>
-                  <label class="text-xs font-bold text-slate-400 block mb-1">ปัญหาที่พบ <span class="text-rose-500">*</span></label>
-                  <textarea id="note-problem" required rows="3" placeholder="ระบุอาการปัญหาที่เกิดขึ้น..." class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs focus:outline-none focus:border-blue-500 text-slate-900 dark:text-white"></textarea>
-               </div>
-               <div>
-                  <label class="text-xs font-bold text-slate-400 block mb-1">การแก้ไขปัญหา <span class="text-rose-500">*</span></label>
-                  <textarea id="note-solution" required rows="3" placeholder="ระบุการดำเนินแก้ไข..." class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs focus:outline-none focus:border-blue-500 text-slate-900 dark:text-white"></textarea>
-               </div>
-               <div>
-                  <label class="text-xs font-bold text-slate-400 block mb-1">แนบรูปภาพบันทึกงาน</label>
-                  <input type="file" id="note-image" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100 dark:file:bg-slate-800 dark:file:text-slate-300">
-               </div>
-               
-               <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2">
-                  <i class="fa-solid fa-floppy-disk"></i> บันทึก Note งาน
-               </button>
-            </form>
-         </section>
-      </div>
-
-      <!-- ==================== TAB: NOTE LOGS ==================== -->
-      <div id="tab-content-notelogs" class="space-y-6 fade-in hidden">
-         <section class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder shadow-sm">
-            <h4 class="text-lg font-bold text-slate-900 dark:text-white mb-4"><i class="fa-solid fa-clock-rotate-left text-blue-500 mr-2"></i>รายการบันทึกงานทั้งหมด (Service Notes Log)</h4>
-            <div class="overflow-x-auto">
-               <table class="w-full text-left border-collapse">
-                  <thead>
-                     <tr class="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-darkBorder">
-                        <th class="p-3 pl-5">วันที่</th>
-                        <th class="p-3">ชื่อของงาน</th>
-                        <th class="p-3">สถานที่</th>
-                        <th class="p-3">ปัญหา</th>
-                        <th class="p-3">แก้ปัญหา</th>
-                        <th class="p-3">รูปภาพ</th>
-                     </tr>
-                  </thead>
-                  <tbody id="note-logs-tbody" class="divide-y divide-slate-100 dark:divide-darkBorder text-sm">
-                     <!-- Populated dynamically -->
-                  </tbody>
-               </table>
-            </div>
-         </section>
-      </div>
     </main>
   </div>
 
   <!-- ==================== MODALS & POPUPS ==================== -->
   
-  <!-- MODAL: Report On-Site Issue -->
-  <div id="serviceIssueModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl overflow-hidden scale-95 transition-transform duration-300 modal-anim flex flex-col border dark:border-darkBorder">
-      <div class="p-5 border-b border-slate-100 dark:border-darkBorder flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-        <h3 class="font-bold text-slate-900 dark:text-white text-base">รายงานแจ้งปัญหาหน้างาน</h3>
-        <button onclick="closeModal('serviceIssueModal')" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-      <form onsubmit="submitServiceIssue(event)" class="p-6 space-y-4">
-         <div>
-            <label class="text-xs font-bold text-slate-400 block mb-1">ชื้องาน/หัวข้อเรื่อง</label>
-            <input type="text" id="issue-name" required placeholder="ระบุชื้องานที่เกิดปัญหา" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs focus:outline-none focus:border-blue-500 text-slate-900 dark:text-white">
-         </div>
-         <div>
-            <label class="text-xs font-bold text-slate-400 block mb-1">สถานที่เกิดปัญหา</label>
-            <input type="text" id="issue-location" required placeholder="ระบุตึก ชั้น หรือ สาขา" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs focus:outline-none focus:border-blue-500 text-slate-900 dark:text-white">
-         </div>
-         <div>
-            <label class="text-xs font-bold text-slate-400 block mb-1">Note การเกิดปัญหา</label>
-            <textarea id="issue-problem" required rows="3" placeholder="ระบุอาการปัญหาที่เกิดขึ้น..." class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkBorder rounded-xl text-xs focus:outline-none focus:border-blue-500 text-slate-900 dark:text-white">แก้ไขแล้วแต่ยังไม่ได้</textarea>
-         </div>
-         <button type="submit" class="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-lg shadow-rose-500/20">
-            <i class="fa-solid fa-paper-plane"></i> ส่งคำแจ้งปัญหาไปยัง IT Support
-         </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL: Service View Resolved & Confirm Close Ticket -->
-  <div id="serviceCloseModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-     <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl overflow-hidden scale-95 transition-transform duration-300 modal-anim flex flex-col border dark:border-darkBorder">
-       <div class="p-5 border-b border-slate-100 dark:border-darkBorder flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-         <h3 class="font-bold text-slate-900 dark:text-white text-base">รายละเอียดและยืนยันเสร็จสิ้นงาน</h3>
-         <button onclick="closeModal('serviceCloseModal')" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
-       </div>
-       <form onsubmit="confirmServiceClose(event)" class="p-6 space-y-4 text-xs">
-          <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl space-y-2">
-             <p><span class="font-bold text-slate-400">ชื้องาน:</span> <span id="close-jobname" class="font-semibold text-slate-800 dark:text-white"></span></p>
-             <p><span class="font-bold text-slate-400">สถานที่:</span> <span id="close-location" class="font-semibold text-slate-800 dark:text-white"></span></p>
-             <p><span class="font-bold text-slate-400">การแก้ไขโดย Dev:</span> <span id="close-devnote" class="font-semibold text-blue-500"></span></p>
-             <p><span class="font-bold text-slate-400">หลักฐานจาก IT Support:</span> <span id="close-itproof" class="font-semibold text-emerald-500"></span></p>
-          </div>
-          <div>
-             <label class="text-xs font-bold text-slate-400 block mb-1">แนบหลักฐานรูปภาพ 1 รูป <span class="text-rose-500">*</span></label>
-             <input type="file" id="close-image" accept="image/*" onchange="previewUploadImage(event)" required class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100 dark:file:bg-slate-800 dark:file:text-slate-300">
-             <div id="image-preview-container" class="mt-2 hidden">
-                <img id="image-preview" src="" class="max-h-40 rounded-xl border border-slate-200 dark:border-darkBorder mx-auto">
-             </div>
-          </div>
-          <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/20">
-             <i class="fa-solid fa-circle-check"></i> เสร็จสิ้นและบันทึกปิดงานสมบูรณ์
-          </button>
-       </form>
-     </div>
-  </div>
-
-  <!-- MODAL: Project Tree Structure Modal (KPI click) -->
-  <div id="ceoTreeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white dark:bg-darkCard w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden scale-95 transition-transform duration-300 modal-anim flex flex-col max-h-[85vh] border dark:border-darkBorder">
-      <div class="p-5 border-b border-slate-100 dark:border-darkBorder flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-        <div>
-          <h3 id="ceo-tree-title" class="text-lg font-bold text-slate-900 dark:text-white">โครงสร้างงานแทรกเร่งด่วน</h3>
-          <p id="ceo-tree-subtitle" class="text-xs text-slate-500">งานเร่งด่วนหน้างานทั้งหมด</p>
-        </div>
-        <button onclick="closeModal('ceoTreeModal')" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-400"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-      <div class="flex-1 overflow-y-auto p-4 md:p-6" id="ceo-tree-container">
-         <!-- Populated dynamically -->
-      </div>
-    </div>
-  </div>
-
   <!-- MODAL: Task Details Modal -->
   <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white dark:bg-darkCard w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden scale-95 transition-transform duration-300 modal-anim flex flex-col max-h-[85vh] border dark:border-darkBorder">
@@ -401,108 +210,55 @@
        rebuildCharts();
     }
 
-    
-    function renderPageElements() {
+    async function loadData() {
+       document.getElementById('current-role-desc').innerText = "กำลังซิงค์คิวงานสะสมจาก Jira API ล่าสุด...";
+       
+       try {
+          const response = await fetch(APPS_SCRIPT_URL);
+          const res = await response.json();
+          
+          if (res && res.status === 'success') {
+             rawJiraData = res.issues.map(item => {
+                return {
+                   key: item.key,
+                   project: item.project,
+                   summary: item.summary,
+                   type: item.type,
+                   status: item.status,
+                   rawStatus: item.rawStatus,
+                   assignee: item.assignee,
+                   priority: item.priority,
+                   created: item.created,
+                   link: item.link,
+                   desc: item.desc || '',
+                   value: item.value || 0
+                };
+             });
+             document.getElementById('current-role-desc').innerText = `อัปเดตข้อมูลล่าสุดสำเร็จ! (เวลา: ${new Date().toLocaleTimeString('th-TH')} น.)`;
+          } else {
+             generateMockJiraData();
+             document.getElementById('current-role-desc').innerText = "แสดงผลด้วยข้อมูลจำลอง (ดึงข้อมูลไม่สำเร็จ)";
+          }
+       } catch (err) {
+          console.error("Failed connecting to Apps Script:", err);
+          generateMockJiraData();
+          document.getElementById('current-role-desc').innerText = "แสดงผลด้วยข้อมูลจำลอง (เชื่อมต่อเครือข่ายล้มเหลว)";
+       }
+
+       filteredData = [...rawJiraData];
+       
+       // Update stats
        let total = filteredData.length;
        let done = filteredData.filter(t => t.status === 'เสร็จสิ้น').length;
        let active = total - done;
 
-       const statTotal = document.getElementById('stat-total');
-       const statActive = document.getElementById('stat-active');
-       const statDone = document.getElementById('stat-done');
+       document.getElementById('stat-total').innerText = total;
+       document.getElementById('stat-active').innerText = active;
+       document.getElementById('stat-done').innerText = done;
 
-       if (statTotal) statTotal.innerText = total;
-       if (statActive) statActive.innerText = active;
-       if (statDone) statDone.innerText = done;
-
-       if (typeof renderRecentTasksTable === 'function') renderRecentTasksTable();
-       if (typeof renderSpaceEpicAccordion === 'function') renderSpaceEpicAccordion();
-       if (typeof renderAdminHistoryTable === 'function') renderAdminHistoryTable();
-       if (typeof renderDevPriorityList === 'function') renderDevPriorityList(filteredData);
-       if (typeof renderSpaceOverviewTable === 'function') renderSpaceOverviewTable();
-       if (typeof updateUrgentCount === 'function') updateUrgentCount();
-       if (typeof renderDevUrgentList === 'function') renderDevUrgentList();
-       if (typeof renderServiceIssuesList === 'function') renderServiceIssuesList();
-       if (typeof renderUrgentPlanningList === 'function') renderUrgentPlanningList();
-       if (typeof renderServiceIssuesTable === 'function') renderServiceIssuesTable();
-       if (typeof renderNoteLogsTable === 'function') renderNoteLogsTable();
-       if (typeof renderTopPriorityList === 'function') renderTopPriorityList();
-       if (typeof renderUrgentTasksTree === 'function') renderUrgentTasksTree();
-       if (typeof rebuildCharts === 'function') rebuildCharts();
-    }
-
-    async function loadData() {
-       // 1. Try parsing cache from localStorage
-       const cachedJira = localStorage.getItem('tasky_cached_jira_data');
-       if (cachedJira) {
-          try {
-             rawJiraData = JSON.parse(cachedJira);
-             filteredData = [...rawJiraData];
-          } catch (e) {
-             console.warn("Jira cache parsing error:", e);
-             generateMockJiraData();
-             filteredData = [...rawJiraData];
-          }
-       } else {
-          generateMockJiraData();
-          filteredData = [...rawJiraData];
-       }
-
-       // For IT support, also check it ticket cache
-       if (typeof loadCachedITData === 'function') {
-          loadCachedITData();
-       }
-
-       // Render cached/mock data instantly
-       renderPageElements();
-
-       // 2. Perform background fetch asynchronously (non-blocking)
-       const descEl = document.getElementById('current-role-desc');
-       if (descEl) descEl.innerText = "กำลังเชื่อมต่อเพื่ออัปเดตข้อมูลล่าสุด...";
-
-       fetch(APPS_SCRIPT_URL)
-          .then(response => response.json())
-          .then(res => {
-             if (res && res.status === 'success') {
-                rawJiraData = res.issues.map(item => {
-                   return {
-                      key: item.key,
-                      project: item.project,
-                      summary: item.summary,
-                      type: item.type,
-                      status: item.status,
-                      rawStatus: item.rawStatus,
-                      assignee: item.assignee,
-                      priority: item.priority,
-                      created: item.created,
-                      link: item.link,
-                      desc: item.desc || '',
-                      value: item.value || 0
-                   };
-                });
-                
-                // Cache the fetched Jira data
-                localStorage.setItem('tasky_cached_jira_data', JSON.stringify(rawJiraData));
-                filteredData = [...rawJiraData];
-
-                // If IT Support, we may also fetch IT tickets in the background
-                if (typeof fetchITTickets === 'function') {
-                   fetchITTickets().then(() => {
-                      renderPageElements();
-                   });
-                } else {
-                   renderPageElements();
-                }
-
-                if (descEl) descEl.innerText = `อัปเดตข้อมูลล่าสุดสำเร็จ! (เวลา: ${new Date().toLocaleTimeString('th-TH')} น.)`;
-             } else {
-                if (descEl) descEl.innerText = "แสดงผลด้วยข้อมูลปัจจุบัน (เซิร์ฟเวอร์ส่งคืนไม่สำเร็จ)";
-             }
-          })
-          .catch(err => {
-             console.warn("Apps Script connection offline, using cache:", err);
-             if (descEl) descEl.innerText = "แสดงผลด้วยข้อมูลปัจจุบัน (เซิร์ฟเวอร์ออฟไลน์)";
-          });
+       renderRecentTasksTable();
+       renderSpaceEpicAccordion();
+       rebuildCharts();
     }
 
     function generateMockJiraData() {
@@ -806,421 +562,6 @@
           modal.classList.add('hidden');
        }, 150);
     }
-// --- Special Service & Urgent Tasks Flow Logic ---
-let activeServiceCloseId = null;
-let uploadedImageBase64 = "";
-
-function getUrgentTasks() {
-   return JSON.parse(localStorage.getItem('tasky_urgent_tasks') || '[]');
-}
-
-function saveUrgentTasks(list) {
-   localStorage.setItem('tasky_urgent_tasks', JSON.stringify(list));
-}
-
-function updateUrgentCount() {
-   const list = getUrgentTasks();
-   const activeCount = list.filter(t => t.status !== 'ปิดงานสมบูรณ์').length;
-   const el = document.getElementById('stat-urgent');
-   if (el) el.innerText = activeCount;
-}
-
-async function submitServiceIssue(e) {
-   e.preventDefault();
-   const name = document.getElementById('issue-name').value;
-   const location = document.getElementById('issue-location').value;
-   const problem = document.getElementById('issue-problem').value;
-
-   const list = getUrgentTasks();
-   const nextIdNum = list.length + 1;
-   const ticketId = `URG-${nextIdNum.toString().padStart(3, '0')}`;
-
-   const newTicket = {
-      id: ticketId,
-      taskName: name,
-      location: location,
-      serviceProblem: problem,
-      serviceProofImg: "",
-      itNote: "",
-      itProof: "",
-      devAssignee: "",
-      devSolNote: "",
-      status: "รอ IT Support ดำเนินการ"
-   };
-
-   list.push(newTicket);
-   saveUrgentTasks(list);
-
-   try {
-      await fetch(APPS_SCRIPT_URL, {
-         method: 'POST',
-         headers: { 'Content-Type': 'text/plain' },
-         body: JSON.stringify({
-            action: "create_service_ticket",
-            ticketData: newTicket
-         })
-      });
-   } catch (err) {
-      console.warn("API offline");
-   }
-
-   document.getElementById('issue-name').value = "";
-   document.getElementById('issue-location').value = "";
-   document.getElementById('issue-problem').value = "แก้ไขแล้วแต่ยังไม่ได้";
-   closeModal('serviceIssueModal');
-   loadData();
-}
-
-function renderServiceIssuesTable() {
-   const tbody = document.getElementById('service-issues-tbody');
-   if (!tbody) return;
-   tbody.innerHTML = "";
-   
-   const list = getUrgentTasks();
-   if (list.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 text-xs">ไม่มีรายการปัญหาหน้างาน</td></tr>`;
-      return;
-   }
-
-   list.forEach(t => {
-      let btnHTML = "";
-      if (t.status === "เสร็จสิ้นแล้ว (รอ Service เปิดดูข้อมูล)") {
-         btnHTML = `<button onclick="openServiceCloseModal('${t.id}')" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 mx-auto"><i class="fa-solid fa-key"></i> ยืนยันปิดงาน</button>`;
-      } else {
-         btnHTML = `<span class="text-xs text-slate-400 font-semibold">ไม่มีการทำงาน</span>`;
-      }
-
-      let badgeColor = "bg-slate-100 text-slate-656 dark:bg-slate-800 dark:text-slate-400";
-      if (t.status === "รอ IT Support ดำเนินการ") badgeColor = "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400";
-      else if (t.status.includes("งานแทรก")) badgeColor = "bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400";
-      else if (t.status === "กำลังดำเนินการ") badgeColor = "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400";
-      else if (t.status.includes("เสร็จสิ้น")) badgeColor = "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400";
-      else if (t.status === "ปิดงานสมบูรณ์") badgeColor = "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
-
-      tbody.innerHTML += `
-         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-            <td class="p-3 pl-5 font-bold text-slate-600 dark:text-slate-400">${t.id}</td>
-            <td class="p-3 font-semibold text-slate-900 dark:text-white">${t.taskName}</td>
-            <td class="p-3 font-medium">${t.location}</td>
-            <td class="p-3 font-bold text-blue-500">${t.devAssignee || 'ยังไม่กำหนด'}</td>
-            <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${badgeColor}">${t.status}</span></td>
-            <td class="p-3 text-center">${btnHTML}</td>
-         </tr>
-      `;
-   });
-}
-
-function openServiceCloseModal(id) {
-   const list = getUrgentTasks();
-   const ticket = list.find(t => t.id === id);
-   if (!ticket) return;
-
-   activeServiceCloseId = id;
-   document.getElementById('close-jobname').innerText = ticket.taskName;
-   document.getElementById('close-location').innerText = ticket.location;
-   document.getElementById('close-devnote').innerText = ticket.devSolNote || "ไม่มีโน้ตระบุ";
-   document.getElementById('close-itproof').innerText = ticket.itProof || "ไม่มีหลักฐานการส่งต่อ";
-
-   document.getElementById('close-image').value = "";
-   document.getElementById('image-preview-container').classList.add('hidden');
-   uploadedImageBase64 = "";
-
-   openModal('serviceCloseModal');
-}
-
-function previewUploadImage(e) {
-   const file = e.target.files[0];
-   if (file) {
-      const reader = new FileReader();
-      reader.onload = function(event) {
-         document.getElementById('image-preview').src = event.target.result;
-         document.getElementById('image-preview-container').classList.remove('hidden');
-         uploadedImageBase64 = "MOCK_IMG_PATH_" + file.name;
-      };
-      reader.readAsDataURL(file);
-   }
-}
-
-async function confirmServiceClose(e) {
-   e.preventDefault();
-   if (!activeServiceCloseId) return;
-
-   const list = getUrgentTasks();
-   const idx = list.findIndex(t => t.id === activeServiceCloseId);
-   if (idx === -1) return;
-
-   list[idx].status = "ปิดงานสมบูรณ์";
-   list[idx].serviceProofImg = uploadedImageBase64 || "proof_image.png";
-   saveUrgentTasks(list);
-
-   try {
-      await fetch(APPS_SCRIPT_URL, {
-         method: 'POST',
-         headers: { 'Content-Type': 'text/plain' },
-         body: JSON.stringify({
-            action: "service_archive_ticket",
-            ticketData: list[idx]
-         })
-      });
-   } catch (err) {
-      console.warn("API offline");
-   }
-
-   closeModal('serviceCloseModal');
-   loadData();
-}
-
-// --- Service Job Notes Logic ---
-function getServiceNotes() {
-   return JSON.parse(localStorage.getItem('tasky_service_notes') || '[]');
-}
-
-function saveServiceNotes(list) {
-   localStorage.setItem('tasky_service_notes', JSON.stringify(list));
-}
-
-async function submitServiceNote(e) {
-   e.preventDefault();
-   const jobName = document.getElementById('note-jobname').value;
-   const location = document.getElementById('note-location').value;
-   const problem = document.getElementById('note-problem').value;
-   const solution = document.getElementById('note-solution').value;
-
-   const newNote = {
-      date: new Date().toISOString().substring(0, 10),
-      jobName: jobName,
-      location: location,
-      problem: problem,
-      solution: solution
-   };
-
-   const list = getServiceNotes();
-   list.push(newNote);
-   saveServiceNotes(list);
-
-   try {
-      await fetch(APPS_SCRIPT_URL, {
-         method: 'POST',
-         headers: { 'Content-Type': 'text/plain' },
-         body: JSON.stringify({
-            action: "create_service_note",
-            noteData: newNote
-         })
-      });
-   } catch (err) {
-      console.warn("API offline");
-   }
-
-   document.getElementById('note-jobname').value = "";
-   document.getElementById('note-location').value = "";
-   document.getElementById('note-problem').value = "";
-   document.getElementById('note-solution').value = "";
-
-   switchTab('notelogs');
-}
-
-function renderNoteLogsTable() {
-   const tbody = document.getElementById('note-logs-tbody');
-   if (!tbody) return;
-   tbody.innerHTML = "";
-   
-   const list = getServiceNotes();
-   if (list.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 text-xs">ไม่มีบันทึกข้อมูลงาน</td></tr>`;
-      return;
-   }
-
-   list.forEach(n => {
-      tbody.innerHTML += `
-         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-            <td class="p-3 pl-5 font-semibold text-slate-550">${n.date}</td>
-            <td class="p-3 font-bold text-slate-900 dark:text-white">${n.jobName}</td>
-            <td class="p-3 font-medium">${n.location}</td>
-            <td class="p-3 text-rose-600 dark:text-rose-400">${n.problem}</td>
-            <td class="p-3 text-emerald-600 dark:text-emerald-400">${n.solution}</td>
-         </tr>
-      `;
-   });
-}
-
-function switchTab(tabId) {
-    document.getElementById('tab-content-dashboard').classList.add('hidden');
-    document.getElementById('tab-content-noteform').classList.add('hidden');
-    document.getElementById('tab-content-notelogs').classList.add('hidden');
-    
-    document.getElementById('menu-dashboard').className = "w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl font-semibold text-base transition text-left";
-    document.getElementById('menu-noteform').className = "w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl font-semibold text-base transition text-left";
-    document.getElementById('menu-notelogs').className = "w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl font-semibold text-base transition text-left";
-
-    if (tabId === 'dashboard') {
-        document.getElementById('tab-content-dashboard').classList.remove('hidden');
-        document.getElementById('menu-dashboard').className = "w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left";
-    } else if (tabId === 'noteform') {
-        document.getElementById('tab-content-noteform').classList.remove('hidden');
-        document.getElementById('menu-noteform').className = "w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left";
-    } else if (tabId === 'notelogs') {
-        document.getElementById('tab-content-notelogs').classList.remove('hidden');
-        document.getElementById('menu-notelogs').className = "w-full flex items-center gap-3.5 px-4 py-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-base transition text-left";
-        renderNoteLogsTable();
-    }
-    closeMobileSidebar();
-}
-
-function closeMobileSidebar() {
-   const sidebar = document.getElementById('sidebar-container');
-   const backdrop = document.getElementById('sidebar-backdrop');
-   if (sidebar) sidebar.classList.add('-translate-x-full');
-   if (backdrop) backdrop.classList.add('hidden');
-}
-
-function handleKPIBoxClick(type) {
-   openCEOTreeModal('all', type);
-}
-
-function renderUrgentTasksTree() {
-   const container = document.getElementById('ceo-tree-container');
-   if (!container) return;
-   container.innerHTML = "";
-   
-   const list = getUrgentTasks().filter(t => t.status !== 'ปิดงานสมบูรณ์');
-   
-   if (list.length === 0) {
-      container.innerHTML = `<p class="text-center text-slate-400 text-sm">ไม่พบงานแทรกเร่งด่วน</p>`;
-      return;
-   }
-   
-   list.forEach(task => {
-      const detailDiv = document.createElement('div');
-      detailDiv.className = "p-4 mb-2 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-darkBorder rounded-2xl text-left";
-      detailDiv.innerHTML = `
-         <div class="flex items-center justify-between font-bold text-xs mb-2">
-            <span class="text-blue-500">${task.id}</span>
-            <span class="px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400">${task.status}</span>
-         </div>
-         <h5 class="font-bold text-slate-900 dark:text-white text-sm mb-1">${task.taskName}</h5>
-         <p class="text-[10px] text-slate-400 mb-2"><i class="fa-solid fa-location-dot"></i> สถานที่: ${task.location}</p>
-         <div class="p-3 bg-white dark:bg-slate-900 rounded-xl space-y-1 text-[11px] text-slate-650 dark:text-slate-355">
-            <p><span class="font-bold">ปัญหา:</span> ${task.serviceProblem}</p>
-            ${task.itNote ? `<p><span class="font-bold">IT Note:</span> ${task.itNote}</p>` : ''}
-            ${task.devAssignee ? `<p><span class="font-bold">ผู้รับผิดชอบ:</span> ${task.devAssignee}</p>` : ''}
-            ${task.devSolNote ? `<p><span class="font-bold">วิธีการแก้:</span> ${task.devSolNote}</p>` : ''}
-         </div>
-      `;
-      container.appendChild(detailDiv);
-   });
-   
-   document.getElementById('ceo-tree-title').innerText = "โครงสร้างงานแทรกเร่งด่วน";
-   document.getElementById('ceo-tree-subtitle').innerText = "งานเร่งด่วนหน้างานทั้งหมด";
-}
-
-function openCEOTreeModal(targetSpaceName, filterType) {
-   renderUrgentTasksTree();
-   openModal('ceoTreeModal');
-}
-
-// --- Standard Helper Rendering functions ---
-function getTaskDates(item) {
-   const keyNum = parseInt(item.key.replace(/\D/g, '')) || 0;
-   const dayOffsets = [-5, -2, 1, 2, 5, 8, 12, 15, 20, 35];
-   const offset = dayOffsets[keyNum % dayOffsets.length];
-   
-   const baseDate = new Date();
-   baseDate.setDate(baseDate.getDate() + offset);
-   
-   const dueTime = baseDate.getTime();
-   const dueStr = baseDate.toISOString().substring(0, 10);
-   const startStr = new Date(dueTime - 5 * 24 * 3600 * 1000).toISOString().substring(0, 10);
-   
-   return { startStr, dueStr, dueTime };
-}
-
-function getDaysRemainingInfo(dueStr) {
-   const today = new Date();
-   today.setHours(0,0,0,0);
-   const due = new Date(dueStr);
-   due.setHours(0,0,0,0);
-   
-   const diffTime = due.getTime() - today.getTime();
-   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-   
-   if (diffDays < 0) {
-      return { label: `เลยกำหนด ${Math.abs(diffDays)} วัน`, colorClass: 'bg-rose-900 border-rose-800 text-rose-200' };
-   } else if (diffDays === 0) {
-      return { label: 'ส่งวันนี้ (ด่วนที่สุด)', colorClass: 'bg-rose-800 border-rose-700 text-white animate-pulse' };
-   } else if (diffDays < 3) {
-      return { label: `อีก ${diffDays} วัน (ด่วนพิเศษ)`, colorClass: 'bg-rose-950 border-rose-900 text-rose-300' };
-   } else if (diffDays < 7) {
-      return { label: `อีก ${diffDays} วัน (ด่วน)`, colorClass: 'bg-red-50 dark:bg-red-950/40 border-red-200 text-red-600 dark:text-red-400' };
-   } else if (diffDays < 30) {
-      return { label: `อีก ${diffDays} วัน`, colorClass: 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 text-orange-600 dark:text-orange-400' };
-   } else {
-      return { label: `อีก ${diffDays} วัน`, colorClass: 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 text-blue-600 dark:text-blue-400' };
-   }
-}
-
-function renderTopPriorityList() {
-   const container = document.getElementById('dev-priority-list');
-   if (!container) return;
-   container.innerHTML = "";
-   
-   let activeTasks = filteredData.filter(t => t.status !== 'เสร็จสิ้น');
-   
-   const prioWeights = { 'High': 3, 'Medium': 2, 'Low': 1, 'Highest': 3 };
-   activeTasks.sort((a,b) => {
-      const wA = prioWeights[a.priority] || 1;
-      const wB = prioWeights[b.priority] || 1;
-      if (wB !== wA) return wB - wA;
-      
-      const datesA = getTaskDates(a);
-      const datesB = getTaskDates(b);
-      return datesA.dueTime - datesB.dueTime;
-   });
-   
-   const limitList = activeTasks.slice(0, 5);
-
-   if (limitList.length === 0) {
-      container.innerHTML = `<div class="col-span-full p-4 text-center text-slate-400 text-xs">ไม่มีคิวงานเร่งด่วน</div>`;
-      return;
-   }
-
-   limitList.forEach(t => {
-      const dates = getTaskDates(t);
-      const daysInfo = getDaysRemainingInfo(dates.dueStr);
-      
-      let prioBadge = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
-      if (t.priority === 'High' || t.priority === 'Highest') {
-         prioBadge = 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400';
-      } else if (t.priority === 'Medium') {
-         prioBadge = 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400';
-      }
-
-      const card = document.createElement('div');
-      card.onclick = () => openDetailModal('jira', t.key);
-      card.className = "flex flex-col justify-between p-4 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-darkBorder rounded-xl hover:border-blue-500 hover:shadow-md cursor-pointer transition select-none h-44 group text-left";
-      
-      card.innerHTML = `
-         <div>
-            <div class="flex items-center justify-between mb-2">
-               <span class="text-xs font-bold text-blue-500 group-hover:text-blue-600 transition-colors">${t.key}</span>
-               <span class="text-[9px] px-1.5 py-0.5 rounded font-bold ${prioBadge}">${t.priority}</span>
-            </div>
-            <h5 class="text-xs font-bold text-slate-900 dark:text-white line-clamp-3 mb-2 leading-snug">${t.summary}</h5>
-         </div>
-         <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex flex-col gap-1.5">
-            <div class="flex items-center justify-between text-[10px]">
-               <span class="text-slate-400">ประเภท:</span>
-               <span class="font-bold text-slate-700 dark:text-slate-300">${t.type || 'Jira'}</span>
-            </div>
-            <div class="px-2 py-1 rounded-lg text-center text-[10px] font-bold border ${daysInfo.colorClass} mt-1 flex items-center justify-center gap-1.5">
-               <i class="fa-solid fa-hourglass-half text-[9px]"></i>
-               <span>${daysInfo.label}</span>
-            </div>
-         </div>
-      `;
-      container.appendChild(card);
-   });
-}
-
   </script>
 </body>
 </html>
